@@ -1,0 +1,13 @@
+coverage
+matplotlib==3.9.2
+numpy==1.26.4
+pandas==2.2.3
+parameterized==0.9.0
+pyink
+pylint
+pytest
+seaborn==0.13.2
+scipy==1.12.0
+streamlit==1.45.0
+pydub
+librosa

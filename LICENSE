@@ -1,0 +1,24 @@
+This work is licensed under a Creative Commons Attribution-NonCommercial 4.0 International License.
+
+You are free to:
+- Share — copy and redistribute the material in any medium or format
+- Adapt — remix, transform, and build upon the material
+
+Under the following terms:
+- Attribution — You must give appropriate credit, provide a link to the license, and indicate if changes were made. You may do so in any reasonable manner, but not in any way that suggests the licensor endorses you or your use.
+- NonCommercial — You may not use the material for commercial purposes.
+
+To view a copy of this license, visit http://creativecommons.org/licenses/by-nc/4.0/
+
+---
+
+Third-Party Audio Stimuli
+
+The audio stimuli files included in this repository are sourced from the qVCV project by Boys Town National Research Hospital. For information on the exact licensing and terms of use for these audio files, please refer to their original repository: 
+https://github.com/BoysTownOrg/qVCV
+
+---
+
+Medical & Hardware Disclaimer
+
+The hearing tests and algorithms in this repository are currently being evaluated for equivalence to clinical audiometry, with promising results in controlled environments using calibrated hardware. However, because this web application cannot control the end-user's acoustic environment, audio hardware, or volume levels, results obtained outside of a controlled clinical setting should not be used for medical diagnosis or clinical decision-making. If you have concerns about your hearing, please consult a qualified healthcare professional.

@@ -1,0 +1,332 @@
+{
+  "scenario_name": "profound_loss",
+  "description": "Flat 90 dB HL audiogram (Profound Hearing Loss)",
+  "ground_truth_audiogram": {
+    "1000": 90.0,
+    "2000": 90.0,
+    "3000": 90.0,
+    "4000": 90.0,
+    "6000": 90.0,
+    "8000": 90.0,
+    "500": 90.0,
+    "250": 90.0
+  },
+  "simulation_parameters": {
+    "num_trials": 40,
+    "max_level_dbhl": 85,
+    "frequencies_hz": [
+      1000,
+      2000,
+      3000,
+      4000,
+      6000,
+      8000,
+      500,
+      250
+    ]
+  },
+  "steps": [
+    {
+      "step_index": 0,
+      "stimulus_freq_hz": 1000.0,
+      "stimulus_level_dbhl": 50.0,
+      "response": false,
+      "true_threshold_at_freq": 90.0
+    },
+    {
+      "step_index": 1,
+      "stimulus_freq_hz": 2000.0,
+      "stimulus_level_dbhl": 85.0,
+      "response": false,
+      "true_threshold_at_freq": 90.0
+    },
+    {
+      "step_index": 2,
+      "stimulus_freq_hz": 3000.0,
+      "stimulus_level_dbhl": 85.0,
+      "response": false,
+      "true_threshold_at_freq": 90.0
+    },
+    {
+      "step_index": 3,
+      "stimulus_freq_hz": 4000.0,
+      "stimulus_level_dbhl": 85.0,
+      "response": false,
+      "true_threshold_at_freq": 90.0
+    },
+    {
+      "step_index": 4,
+      "stimulus_freq_hz": 6000.0,
+      "stimulus_level_dbhl": 85.0,
+      "response": false,
+      "true_threshold_at_freq": 90.0
+    },
+    {
+      "step_index": 5,
+      "stimulus_freq_hz": 8000.0,
+      "stimulus_level_dbhl": 85.0,
+      "response": false,
+      "true_threshold_at_freq": 90.0
+    },
+    {
+      "step_index": 6,
+      "stimulus_freq_hz": 500.0,
+      "stimulus_level_dbhl": 76.0516820306011,
+      "response": false,
+      "true_threshold_at_freq": 90.0
+    },
+    {
+      "step_index": 7,
+      "stimulus_freq_hz": 250.0,
+      "stimulus_level_dbhl": 72.62585375717781,
+      "response": false,
+      "true_threshold_at_freq": 90.0
+    },
+    {
+      "step_index": 8,
+      "stimulus_freq_hz": 1000.0,
+      "stimulus_level_dbhl": 82.92261753494282,
+      "response": false,
+      "true_threshold_at_freq": 90.0
+    },
+    {
+      "step_index": 9,
+      "stimulus_freq_hz": 250.0,
+      "stimulus_level_dbhl": 76.27702952251425,
+      "response": false,
+      "true_threshold_at_freq": 90.0
+    },
+    {
+      "step_index": 10,
+      "stimulus_freq_hz": 500.0,
+      "stimulus_level_dbhl": 80.60180350805281,
+      "response": false,
+      "true_threshold_at_freq": 90.0
+    },
+    {
+      "step_index": 11,
+      "stimulus_freq_hz": 250.0,
+      "stimulus_level_dbhl": 80.16004770394778,
+      "response": false,
+      "true_threshold_at_freq": 90.0
+    },
+    {
+      "step_index": 12,
+      "stimulus_freq_hz": 2000.0,
+      "stimulus_level_dbhl": 85.0,
+      "response": false,
+      "true_threshold_at_freq": 90.0
+    },
+    {
+      "step_index": 13,
+      "stimulus_freq_hz": 3000.0,
+      "stimulus_level_dbhl": 85.0,
+      "response": false,
+      "true_threshold_at_freq": 90.0
+    },
+    {
+      "step_index": 14,
+      "stimulus_freq_hz": 4000.0,
+      "stimulus_level_dbhl": 85.0,
+      "response": false,
+      "true_threshold_at_freq": 90.0
+    },
+    {
+      "step_index": 15,
+      "stimulus_freq_hz": 6000.0,
+      "stimulus_level_dbhl": 85.0,
+      "response": false,
+      "true_threshold_at_freq": 90.0
+    },
+    {
+      "step_index": 16,
+      "stimulus_freq_hz": 8000.0,
+      "stimulus_level_dbhl": 85.0,
+      "response": false,
+      "true_threshold_at_freq": 90.0
+    },
+    {
+      "step_index": 17,
+      "stimulus_freq_hz": 1000.0,
+      "stimulus_level_dbhl": 85.0,
+      "response": false,
+      "true_threshold_at_freq": 90.0
+    },
+    {
+      "step_index": 18,
+      "stimulus_freq_hz": 2000.0,
+      "stimulus_level_dbhl": 85.0,
+      "response": false,
+      "true_threshold_at_freq": 90.0
+    },
+    {
+      "step_index": 19,
+      "stimulus_freq_hz": 3000.0,
+      "stimulus_level_dbhl": 85.0,
+      "response": false,
+      "true_threshold_at_freq": 90.0
+    },
+    {
+      "step_index": 20,
+      "stimulus_freq_hz": 4000.0,
+      "stimulus_level_dbhl": 85.0,
+      "response": false,
+      "true_threshold_at_freq": 90.0
+    },
+    {
+      "step_index": 21,
+      "stimulus_freq_hz": 6000.0,
+      "stimulus_level_dbhl": 85.0,
+      "response": false,
+      "true_threshold_at_freq": 90.0
+    },
+    {
+      "step_index": 22,
+      "stimulus_freq_hz": 8000.0,
+      "stimulus_level_dbhl": 85.0,
+      "response": false,
+      "true_threshold_at_freq": 90.0
+    },
+    {
+      "step_index": 23,
+      "stimulus_freq_hz": 500.0,
+      "stimulus_level_dbhl": 84.31271162325251,
+      "response": false,
+      "true_threshold_at_freq": 90.0
+    },
+    {
+      "step_index": 24,
+      "stimulus_freq_hz": 1000.0,
+      "stimulus_level_dbhl": 85.0,
+      "response": false,
+      "true_threshold_at_freq": 90.0
+    },
+    {
+      "step_index": 25,
+      "stimulus_freq_hz": 2000.0,
+      "stimulus_level_dbhl": 85.0,
+      "response": false,
+      "true_threshold_at_freq": 90.0
+    },
+    {
+      "step_index": 26,
+      "stimulus_freq_hz": 3000.0,
+      "stimulus_level_dbhl": 85.0,
+      "response": false,
+      "true_threshold_at_freq": 90.0
+    },
+    {
+      "step_index": 27,
+      "stimulus_freq_hz": 4000.0,
+      "stimulus_level_dbhl": 85.0,
+      "response": false,
+      "true_threshold_at_freq": 90.0
+    },
+    {
+      "step_index": 28,
+      "stimulus_freq_hz": 6000.0,
+      "stimulus_level_dbhl": 85.0,
+      "response": false,
+      "true_threshold_at_freq": 90.0
+    },
+    {
+      "step_index": 29,
+      "stimulus_freq_hz": 8000.0,
+      "stimulus_level_dbhl": 85.0,
+      "response": false,
+      "true_threshold_at_freq": 90.0
+    },
+    {
+      "step_index": 30,
+      "stimulus_freq_hz": 500.0,
+      "stimulus_level_dbhl": 85.0,
+      "response": false,
+      "true_threshold_at_freq": 90.0
+    },
+    {
+      "step_index": 31,
+      "stimulus_freq_hz": 250.0,
+      "stimulus_level_dbhl": 83.26551372748636,
+      "response": false,
+      "true_threshold_at_freq": 90.0
+    },
+    {
+      "step_index": 32,
+      "stimulus_freq_hz": 1000.0,
+      "stimulus_level_dbhl": 85.0,
+      "response": false,
+      "true_threshold_at_freq": 90.0
+    },
+    {
+      "step_index": 33,
+      "stimulus_freq_hz": 2000.0,
+      "stimulus_level_dbhl": 85.0,
+      "response": false,
+      "true_threshold_at_freq": 90.0
+    },
+    {
+      "step_index": 34,
+      "stimulus_freq_hz": 3000.0,
+      "stimulus_level_dbhl": 85.0,
+      "response": false,
+      "true_threshold_at_freq": 90.0
+    },
+    {
+      "step_index": 35,
+      "stimulus_freq_hz": 4000.0,
+      "stimulus_level_dbhl": 85.0,
+      "response": false,
+      "true_threshold_at_freq": 90.0
+    },
+    {
+      "step_index": 36,
+      "stimulus_freq_hz": 6000.0,
+      "stimulus_level_dbhl": 85.0,
+      "response": false,
+      "true_threshold_at_freq": 90.0
+    },
+    {
+      "step_index": 37,
+      "stimulus_freq_hz": 8000.0,
+      "stimulus_level_dbhl": 85.0,
+      "response": false,
+      "true_threshold_at_freq": 90.0
+    },
+    {
+      "step_index": 38,
+      "stimulus_freq_hz": 500.0,
+      "stimulus_level_dbhl": 85.0,
+      "response": false,
+      "true_threshold_at_freq": 90.0
+    },
+    {
+      "step_index": 39,
+      "stimulus_freq_hz": 250.0,
+      "stimulus_level_dbhl": 85.0,
+      "response": false,
+      "true_threshold_at_freq": 90.0
+    }
+  ],
+  "final_estimation": {
+    "thresholds": {
+      "1000": 87.97837884615386,
+      "2000": 88.36536308139864,
+      "3000": 88.7253867804382,
+      "4000": 89.0833151906277,
+      "6000": 89.70990376432593,
+      "8000": 90.15271024428242,
+      "500": 87.64174341425942,
+      "250": 86.43262383229931
+    },
+    "variances": {
+      "1000": 5.76923076923077,
+      "2000": 5.76923076923077,
+      "3000": 5.76923076923077,
+      "4000": 5.76923076923077,
+      "6000": 5.76923076923077,
+      "8000": 5.76923076923077,
+      "500": 5.76923076923077,
+      "250": 5.76923076923077
+    }
+  }
+}

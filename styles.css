@@ -1,0 +1,432 @@
+/* Button styling for Streamlit web demo. */
+
+.st-key-enabled button {
+  background-color: #FFA500;
+  /* Orange. */
+  width: 400px;
+}
+
+.st-key-disabled button[disabled] {
+  background-color: #FFDEAD;
+  /* Navajo white. */
+  width: 400px;
+}
+
+.st-key-practice button {
+  background-color: #B0C4DE;
+  /* Light steel blue. */
+  width: 200px;
+}
+
+/* Button styling for categorical loudness scaling demo.
+   All 11 buttons share the same width, set once via
+   --cls-btn-w. Button height is derived automatically
+   with calc() to maintain a 20:9 smartphone aspect
+   ratio (height:width). Change --cls-btn-w and
+   everything scales. */
+:root {
+  --cls-btn-w: 220px;
+}
+
+/* Positioning wrapper for the phone area. Shrinks
+   to fit the phone and centres it in the column.
+   Acts as the positioning context for the spinner
+   overlay. */
+.st-key-cls_phone_area {
+  position: relative;
+  width: fit-content;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* Spinner overlay centred on the phone screen. */
+.st-key-cls_spinner {
+  position: absolute !important;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: max-content !important;
+  z-index: 10;
+  pointer-events: none;
+}
+
+/* Collapse all vertical gaps in the CLS button
+   container and centre it. The border, radius, and
+   shadow simulate a smartphone bezel/edge. */
+.st-key-cls_buttons {
+  gap: 0 !important;
+  width: var(--cls-btn-w);
+  margin-left: auto;
+  margin-right: auto;
+  border: 3px solid #333;
+  border-radius: 20px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.st-key-cls_buttons > div {
+  gap: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+.st-key-cls_buttons .stElementContainer {
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+.st-key-cls_buttons .stButton {
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+/* Shared properties for all CLS response buttons. */
+.st-key-cls_buttons button {
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+  width: var(--cls-btn-w);
+  /* height = width * 20 / 9 / 11 (20:9 ratio, 11 buttons). */
+  height: calc(var(--cls-btn-w) * 20 / 9 / 11);
+  color: black;
+  box-sizing: border-box;
+  border: none;
+  border-top: 1px solid rgba(0, 0, 0, 0.2);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.2);
+  border-radius: 0;
+}
+
+.st-key-cls_buttons button > * {
+  font-size: 1.05rem !important;
+}
+
+/* Per-button background colours: blue saturation
+   gradient (deep blue → white). Constant hue 215,
+   saturation decreases 80 → 0%, lightness increases
+   45 → 100% in even steps. Uses a perceptually
+   neutral palette to avoid colour-loudness priming. */
+
+.st-key-extremely_loud button {
+  background-color: hsl(215, 80%, 45%);
+  color: white;
+  border-top: none;
+}
+
+.st-key-very_loud button {
+  background-color: hsl(215, 72%, 51%);
+  color: white;
+}
+
+.st-key-loud_to_very_loud button {
+  background-color: hsl(215, 64%, 56%);
+  color: white;
+}
+
+.st-key-loud button {
+  background-color: hsl(215, 56%, 62%);
+}
+
+.st-key-medium_to_loud button {
+  background-color: hsl(215, 48%, 67%);
+}
+
+.st-key-medium button {
+  background-color: hsl(215, 40%, 73%);
+}
+
+.st-key-soft_to_medium button {
+  background-color: hsl(215, 32%, 78%);
+}
+
+.st-key-soft button {
+  background-color: hsl(215, 24%, 84%);
+}
+
+.st-key-very_soft_to_soft button {
+  background-color: hsl(215, 16%, 89%);
+}
+
+.st-key-very_soft button {
+  background-color: hsl(215, 8%, 95%);
+}
+
+.st-key-not_heard button {
+  background-color: hsl(215, 0%, 100%);
+  border-bottom: none;
+}
+
+.st-key-cls_calib_tone button {
+  background-color: #B0C4DE;
+  /* Light steel blue. */
+  width: 170px;
+}
+
+.st-key-cls_start_replay button {
+  background-color: #FFA500;
+  /* Orange. */
+  width: 170px;
+}
+
+.st-key-cls_volume_confirm button {
+  background-color: #B0C4DE;
+  /* Light steel blue. */
+  width: 300px;
+}
+
+/* Button styling for the pure-tone audiometry demo. */
+
+.st-key-pta_demo_tone_left button {
+  background-color: #87CEEB;
+  /* Sky blue. */
+  width: 200px;
+}
+
+.st-key-pta_demo_tone_right button {
+  background-color: #FA8072;
+  /* Salmon. */
+  width: 200px;
+}
+
+.st-key-pta_start_test button {
+  background-color: #D3D3D3;
+  /* Light gray. */
+  width: 200px;
+}
+
+.st-key-pta_cancel_test button {
+  background-color: #D3D3D3;
+  /* Light gray. */
+  width: 200px;
+}
+
+.st-key-pta_canned_data button {
+  background-color: #D3D3D3;
+  /* Light gray. */
+  width: 200px;
+}
+
+.st-key-pta_response button {
+  background-color: #F4B400;
+  /* Vivid/Google orange. */
+  border-radius: 50%;
+  /* Make the button circular */
+  width: 180px;
+  height: 180px;
+}
+
+.st-key-pta_download_data button {
+  background-color: #D3D3D3;
+  /* Light gray. */
+  width: 200px;
+}
+
+/* Button stylings for the pip PTA demo. */
+
+.st-key-pip_3_pips button {
+  background-color: rgb(255, 165, 50);
+  width: 92px;
+  height: 200px;
+}
+
+.st-key-pip_2_pips button {
+  background-color: rgb(255, 165, 50);
+  width: 92px;
+  height: 200px;
+}
+
+.st-key-pip_1_pips button {
+  background-color: rgb(255, 165, 50);
+  width: 92px;
+  height: 200px;
+}
+
+.st-key-pip_0_pips button {
+  background-color: #B0C4DE;
+  /* Light steel blue. */
+  width: 300px;
+  height: 95px;
+}
+
+/* Style for VCV response buttons */
+.st-key-btn_B button,
+.st-key-btn_D button,
+.st-key-btn_G button,
+.st-key-btn_K button,
+.st-key-btn_N button,
+.st-key-btn_S button,
+.st-key-btn_SH button,
+.st-key-btn_T button,
+.st-key-btn_V button,
+.st-key-btn_Z button,
+.st-key-btn_M button,
+.st-key-btn_P button,
+.st-key-btn_F button,
+.st-key-btn_TH button,
+.st-key-btn_DH button,
+.st-key-btn_ZH button {
+  width: 70px;
+  height: 70px;
+}
+
+/* Style for the start button (enabled and disabled states) */
+.st-key-vcv_btn_start_enabled button {
+  background-color: #FFA500;
+  /* Orange. */
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  font-size: 0.8rem;
+  padding: 0px;
+}
+
+.st-key-vcv_btn_start_disabled button {
+  background-color: #FFDEAD;
+  /* Navajo white. */
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  font-size: 0.8rem;
+  padding: 0px;
+}
+
+/* Style for the practice button (enabled and disabled states) */
+.st-key-vcv_btn_practice_enabled button {
+  background-color: #B0C4DE;
+  /* Light steel blue. */
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  font-size: 0.8rem;
+  padding: 0px;
+}
+
+.st-key-vcv_btn_practice_disabled button {
+  background-color: #D3D3D3;
+  /* Light gray. */
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  font-size: 0.8rem;
+  padding: 0px;
+}
+
+/* Circular layout container for VCV buttons. */
+.st-key-vcv_circle {
+  position: relative;
+  min-height: 480px;
+  max-width: 500px;
+  margin: 0 auto;
+}
+
+/* Center buttons in the middle of the circle. */
+.st-key-vcv_circle .st-key-vcv_btn_practice_enabled,
+.st-key-vcv_circle .st-key-vcv_btn_practice_disabled,
+.st-key-vcv_circle .st-key-vcv_btn_start_enabled,
+.st-key-vcv_circle .st-key-vcv_btn_start_disabled {
+  position: absolute !important;
+  left: 190px;
+  top: 175px;
+}
+
+/* Consonant buttons positioned in a circle. */
+/* D at 0 deg (top). */
+.st-key-vcv_circle .st-key-btn_D {
+  position: absolute !important;
+  left: 215px;
+  top: 25px;
+}
+
+/* G at 36 deg. */
+.st-key-vcv_circle .st-key-btn_G {
+  position: absolute !important;
+  left: 318px;
+  top: 58px;
+}
+
+/* K at 72 deg. */
+.st-key-vcv_circle .st-key-btn_K {
+  position: absolute !important;
+  left: 381px;
+  top: 146px;
+}
+
+/* N at 108 deg. */
+.st-key-vcv_circle .st-key-btn_N {
+  position: absolute !important;
+  left: 381px;
+  top: 254px;
+}
+
+/* S at 144 deg. */
+.st-key-vcv_circle .st-key-btn_S {
+  position: absolute !important;
+  left: 318px;
+  top: 342px;
+}
+
+/* SH at 180 deg (bottom). */
+.st-key-vcv_circle .st-key-btn_SH {
+  position: absolute !important;
+  left: 215px;
+  top: 375px;
+}
+
+/* T at 216 deg. */
+.st-key-vcv_circle .st-key-btn_T {
+  position: absolute !important;
+  left: 112px;
+  top: 342px;
+}
+
+/* V at 252 deg. */
+.st-key-vcv_circle .st-key-btn_V {
+  position: absolute !important;
+  left: 49px;
+  top: 254px;
+}
+
+/* Z at 288 deg. */
+.st-key-vcv_circle .st-key-btn_Z {
+  position: absolute !important;
+  left: 49px;
+  top: 146px;
+}
+
+/* B at 324 deg. */
+.st-key-vcv_circle .st-key-btn_B {
+  position: absolute !important;
+  left: 112px;
+  top: 58px;
+}
+
+/* Target any direct child element for font styling */
+.st-key-btn_B button>*,
+.st-key-btn_D button>*,
+.st-key-btn_G button>*,
+.st-key-btn_K button>*,
+.st-key-btn_N button>*,
+.st-key-btn_S button>*,
+.st-key-btn_SH button>*,
+.st-key-btn_T button>*,
+.st-key-btn_V button>*,
+.st-key-btn_Z button>*,
+.st-key-btn_M button>*,
+.st-key-btn_P button>*,
+.st-key-btn_F button>*,
+.st-key-btn_TH button>*,
+.st-key-btn_DH button>*,
+.st-key-btn_ZH button>* {
+  font-weight: bold !important;
+  font-size: 1.3rem !important;
+}
+
+/* Common styling for manual download buttons */
+.st-key-pta_manual_download button,
+.st-key-cls_manual_download button,
+.st-key-pip_manual_download button,
+.st-key-vcv_manual_download button {
+  background-color: #B0C4DE;
+  /* Light steel blue */
+  color: black;
+  width: 150px;
+}

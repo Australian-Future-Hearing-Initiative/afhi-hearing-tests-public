@@ -1,0 +1,26 @@
+/local_results/
+
+__pycache__/
+
+# Python virtual environments
+venv/
+.venv/
+*.env
+*_env/
+
+.streamlit/secrets.toml
+
+# Private local data (not for public distribution)
+_private/
+
+# macOS
+**/.DS_Store
+
+# IDE / Editor
+.idea/
+.vscode/
+.cursor/
+
+# Test / Coverage artifacts
+.coverage
+htmlcov/
