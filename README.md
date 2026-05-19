@@ -1,5 +1,7 @@
 # AFHI Web Demos
-Python demos of consonant confusion and categorical loudness scaling tests for the AFHI project.
+Python demos of the hearing tests developed by the AFHI.
+
+A live instance is hosted at [afhi-hearing-tests.streamlit.app](https://afhi-hearing-tests.streamlit.app/).
 
 ## Disclaimers
 This application contains hearing tests currently being evaluated for equivalence to clinical audiometry. Please read the **Medical & Hardware Disclaimer** in the [LICENSE](LICENSE) file.
