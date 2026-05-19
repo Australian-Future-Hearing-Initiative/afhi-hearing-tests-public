@@ -33,8 +33,9 @@ SETTINGS_STRING = (
   'If you are participating in a study, the following options are locked. '
   'Otherwise, you can adjust them to change the test behavior.'
 )
-VOL_SETTING_URL = ('https://github.com/jmaclaren/afhi-hearing-tests-public'
-                   '/blob/main/docs/volume_calibration.md')
+VOL_SETTING_URL = ('https://github.com/Australian-Future-Hearing-Initiative'
+                   '/afhi-hearing-tests-public/blob/main/docs'
+                   '/volume_calibration.md')
 MERGE_LR_HELP = ('Combine left and right channels in hearing tests. This '
                  'will halve the test time, but affects the clinical '
                  'relevance of the results.')
