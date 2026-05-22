@@ -131,8 +131,6 @@ def demo_button():
   dbspl += calibration.get_device_offset(
       DEMO_TONE_FREQ_HZ, st.session_state.pip_device)
   tone_amp = calibration.dbspl_to_amp(dbspl)
-  # TODO: replace the play_pulsed_tone function with a dedicated function for
-  # this purpose that does not require setting amp to zero etc.
   with col1:
     if st.button('Silence', icon=':material/play_arrow:'):
       play_pulsed_tone(DEMO_TONE_FREQ_HZ, 0, n_pulses=1)

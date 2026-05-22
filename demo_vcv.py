@@ -883,7 +883,6 @@ def _process_and_play_vcv(clean_file_path: str, snr_db: float, ear: str):
   # We calculate the target RMS amplitude corresponding to the target SPL
   # (set by user) to ensures the TOTAL output level (Speech + Noise) is always
   # the target dB SPL.
-  # target_amp = calibration.dbspl_to_amp(target_spl) <-- REMOVED (see above)
 
   mixed_audio, _ = audio_synthesis.mix_vcv_with_noise(
       snr_db=snr_db,
@@ -1100,7 +1099,6 @@ def create_main_demo():
   create_intro_text()
   display_settings()
   common.display_preparation()
-  # create_practice_button() removed - logic moved to grid center button
   create_test_instructions()
 
   if not st.session_state.vcv_test_completed:
