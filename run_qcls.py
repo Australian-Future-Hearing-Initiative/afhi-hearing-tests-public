@@ -1,6 +1,7 @@
 """Runs the qCLS process on simulated data."""
 
 import argparse
+import os
 import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
@@ -81,9 +82,10 @@ def qcls_testing_process(hidden_model: dict = None, error_rate: float = 0.33,
   frequencies = all_data[:, 0].reshape(-1, 1)
   amplitudes = all_data[:, 1].reshape(-1, 1)
   cus = all_data[:, 2].reshape(-1, 1)
-  # Save the data to a CSV file.
+  # Save the data to a CSV file in local_results.
+  os.makedirs('local_results', exist_ok=True)
   buttons = [np.where(hearing_models.BUTTONS_TO_CUS == cu)[0][0] for cu in cus]
-  save_csv(frequencies, amplitudes, buttons, 'simulated_data.csv')
+  save_csv(frequencies, amplitudes, buttons, 'local_results/simulated_data.csv')
 
   plt.figure()
   plt.semilogx(frequencies, calibration.amp_to_dbspl(amplitudes), 'r*')
@@ -133,16 +135,30 @@ def plot_qcls_results_mono(df: pd.DataFrame, loudness_model: dict):
   buttons = df['Button'].values
   cus = hearing_models.BUTTONS_TO_CUS[buttons].reshape(-1, 1)
 
-  fig = plt.figure(figsize=(6, 5))
+  fig = plt.figure(figsize=(8, 5))
   plt.title('Responses with fitted model')
   plt.xlabel('Frequency, Hz')
   plt.ylabel('dB SPL presented')
+
+  # Plot points with color-coding based on button press index (0 to 10)
+  sc = plt.scatter(
+      frequencies,
+      calibration.amp_to_dbspl(amplitudes),
+      c=buttons,
+      cmap='viridis',
+      marker='*',
+      s=100,
+      vmin=0,
+      vmax=10,
+      zorder=3,
+  )
+  plt.xscale('log')
+  plt.colorbar(sc, label='Button Press (0-10)')
+
   for n in range(len(frequencies)):
     freq_hz = frequencies[n].item()
     amp_dbspl = calibration.amp_to_dbspl(amplitudes[n].item())
     plot_str = str(int(cus[n].item()))
-    # TODO: Use color for each point, based on button press.
-    plt.semilogx(freq_hz, amp_dbspl, 'r*')
     plt.text(freq_hz, amp_dbspl, plot_str)
 
   inf_audiogram = hearing_models.loudness_model_to_audiogram(loudness_model)
@@ -238,7 +254,9 @@ def run_on_complete_dataset(df: pd.DataFrame) -> dict:
   Returns:
     The loudness model (dict).
   """
-  # TODO: look into convergence issue that occurs if starting point is [0, 0].
+  # A small non-zero starting point is used to avoid numerical/gradient
+  # degeneracy and convergence issues that can occur if initialized at
+  # exactly [0, 0].
   loudness_model = {
     'component_coeffs': np.asarray([0.01, 0]),
     'sone_intersection': 24

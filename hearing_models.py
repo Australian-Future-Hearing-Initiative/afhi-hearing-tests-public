@@ -379,8 +379,9 @@ def simulate_loudness_categorization(
   # Calculate distances to presented dB SPL.
   distances = (dbspl - presented_dbspl) ** 2
   # Pick the category with minimum distance, or not far from it.
-  # TODO: this feels like a bit of a hack - replace with a direct selection
-  # based on np.random.choice or similar.
+  # Probabilistically simulate user response errors by allowing near-misses.
+  # If a random check fails, the next closest loudness category is selected
+  # (up to 2 steps away).
   index = np.argmin(distances)
   for _ in range(2):
     if np.random.rand() > error_rate:
