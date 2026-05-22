@@ -518,7 +518,6 @@ def plot_weight_evolution(weight_history: List[Tuple[float, float]],
   plt.figure(figsize=(12, 6))
   # Unpack history: (average_local_weight, specific_local_weight)
   avg_weights = [x[0] for x in weight_history]
-  # specific_weights = [x[1] for x in weight_history] # Removed as per request
 
   trials = np.arange(1, len(weight_history) + 1)
   max_trial = len(weight_history)
