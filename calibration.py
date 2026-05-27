@@ -27,14 +27,14 @@ REFERENCE_DB_SPL = 70
 # Loud Noise Reduction, Hearing Aid) must be disabled on the Airpods Pro 2
 # for these offsets to be valid.
 AIRPODS_PRO2_OFFSET = {
-  250: -1.7,
-  500: 7.0,
-  1000: 12.0,
-  2000: 0.0,
-  3000: 3.9,
-  4000: 6.7,
-  6000: 5.7,
-  8000: 7.5,
+  250: -0.4,
+  500: 0.5,
+  1000: 3.0,
+  2000: -0.1,
+  3000: 1.0,
+  4000: -0.3,
+  6000: 1.7,
+  8000: -0.5,
 }
 # Calibration values for VCVs.
 REFERENCE_VCV_DB_SPL = 58  # This value was measured in the lab.
