@@ -53,7 +53,9 @@ PTA_MAX_TRIALS_PER_EAR = 40  # Stopping condition for adaptive logic.
 # Supported headphone devices for calibrated hearing tests.
 DEVICE_PIXEL_BUDS = 'Google Pixel Buds'
 DEVICE_AIRPODS_PRO2 = 'Apple AirPods Pro 2'
-SUPPORTED_DEVICES = [DEVICE_PIXEL_BUDS, DEVICE_AIRPODS_PRO2]
+DEVICE_OTHER = 'Other (Dynamic AI Calibration)'
+SUPPORTED_DEVICES = [DEVICE_PIXEL_BUDS, DEVICE_AIRPODS_PRO2, DEVICE_OTHER]
+
 
 
 

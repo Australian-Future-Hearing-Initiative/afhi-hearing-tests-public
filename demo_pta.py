@@ -16,6 +16,8 @@ import calibration
 import common
 import pta_results
 import pta_algorithms
+from hearing_agent import get_calibration_factors
+
 
 
 FS_HZ = 44100  # Sampling frequency in Hz used to synthesize the tones.
@@ -178,13 +180,19 @@ def demo_button():
 
 def start_button():
   """Displays the start button and handles its functionality."""
+  start_disabled = (st.session_state.pta_state == 'Running')
+  if st.session_state.get('pta_device') == common.DEVICE_OTHER:
+    if st.session_state.get('dynamic_calibrated_device') != st.session_state.get('pta_custom_device'):
+      start_disabled = True
+  
   if st.button('Start the test', key='pta_start_test',
                icon=':material/play_arrow:',
-               disabled=st.session_state.pta_state == 'Running'):
+               disabled=start_disabled):
     set_initial_demo_state()
     st.session_state.pta_state = 'Running'
     st.session_state.pta_start_time = time.time()
     st.rerun()
+
 
 def cancel_button():
   """Displays the cancel button and handles its functionality."""
@@ -492,6 +500,38 @@ def display_settings():
     st.session_state.pta_device = device
     if device == common.DEVICE_AIRPODS_PRO2:
       st.caption('Ensure all Hearing Assistance features are disabled.')
+    elif device == common.DEVICE_OTHER:
+      custom_model = st.text_input(
+          'Custom headphone model name:',
+          value=st.session_state.get('pta_custom_device', 'Sony WH-1000XM4'),
+          disabled=settings_disabled
+      )
+      st.session_state.pta_custom_device = custom_model
+      
+      calibrated_model = st.session_state.get('dynamic_calibrated_device')
+      if calibrated_model != custom_model:
+        st.info('Please run calibration retrieval for this model before starting the test.')
+        if st.button('Run Calibration Retrieval', key='run_pta_calibration'):
+          with st.spinner(f'Running Calibration Agent for "{custom_model}"...'):
+            res = get_calibration_factors(custom_model, 'Google Pixel Buds Pro')
+            if res['status'] == 'success':
+              offsets_dict = dict(zip(res['frequencies'], res['correction_factors_db']))
+              st.session_state.dynamic_offsets = offsets_dict
+              st.session_state.dynamic_calibrated_device = custom_model
+              st.session_state.dynamic_cal_res = res
+              st.success(f'Successfully calibrated: {custom_model}!')
+              st.rerun()
+            else:
+              st.error(f"Calibration failed: {res['error_message']}")
+      else:
+        res = st.session_state.dynamic_cal_res
+        st.success(f'Calibrated Device: {calibrated_model}')
+        st.write(f"Vetted Source: {res['user_selected_source']}")
+        if res['bone_conduction_warning']:
+          st.warning('⚠️ Bone Conduction Detected. Bypasses middle ear!')
+        if res.get('vetting_warning'):
+          st.info(f"⚠️ {res['vetting_warning']}")
+
   else:
     st.session_state.pta_device = common.DEVICE_PIXEL_BUDS
   # Add a radio button to choose the test type.
