@@ -59,10 +59,6 @@ Use pylint:\
 `pylint *.py`\
 Code should be rated 10/10. Pylint uses the pylintrc file from
 [here](https://google.github.io/styleguide/pylintrc) for Google style. This file is included in this repository.\
-If there are many pylint issues (e.g., a lot of new code where the indentation is wrong), consider using pyink to first
-autoformat with the following options:\
-`pyink --pyink-indentation 2  --pyink-use-majority-quotes  <filename>.py'`\
-Do not run pyink on code that already passes pylint (it sometimes produces a worse result than human-edited code).
 
 ## License
 Please see the [LICENSE](LICENSE) file for details on the licensing of this project.
