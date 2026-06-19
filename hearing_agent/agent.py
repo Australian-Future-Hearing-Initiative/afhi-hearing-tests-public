@@ -7,7 +7,7 @@ from google.adk.runners import Runner
 from google.genai import types
 
 from .retrieval import search_autoeq_files, fetch_frequency_response, is_bone_conduction_device
-from .calibration import vet_and_combine_responses, calculate_calibration_correction
+from .calibration_pipeline import vet_and_combine_responses, calculate_calibration_correction
 from .config import AUDIOMETRY_FREQUENCIES
 
 def get_calibration_factors(user_headphone: str, baseline_headphone: str) -> dict:
