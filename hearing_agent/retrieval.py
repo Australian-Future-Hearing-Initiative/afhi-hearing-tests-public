@@ -64,37 +64,6 @@ def search_autoeq_files(headphone_name: str) -> list[dict]:
         print(f"Deterministic Match Found locally for '{headphone_name}': {len(local_matches)} result(s).")
         return local_matches
 
-    # 2. Search local AutoEq clone if present
-    autoeq_dir = find_local_autoeq_dir()
-    if autoeq_dir:
-        results_dir = os.path.join(autoeq_dir, "results")
-        if os.path.exists(results_dir):
-            print(f"Searching local AutoEq clone for '{headphone_name}'...")
-            local_clone_matches = []
-            words = name_clean.split()
-            for root, dirs, files in os.walk(results_dir):
-                for file in files:
-                    if file.endswith(".csv"):
-                        rel_path = os.path.relpath(os.path.join(root, file), autoeq_dir)
-                        rel_path_lower = rel_path.lower()
-                        if all(word in rel_path_lower for word in words):
-                            path_parts = rel_path.split(os.sep)
-                            db_source = path_parts[1] if len(path_parts) > 1 else "unknown"
-                            encoded_parts = [urllib.parse.quote(part) for part in path_parts]
-                            url_path = "/".join(encoded_parts)
-                            raw_url = f"https://raw.githubusercontent.com/jaakkopasanen/AutoEq/master/{url_path}"
-                            html_url = raw_url.replace("raw.githubusercontent.com", "github.com").replace("/master/", "/blob/master/")
-                            
-                            local_clone_matches.append({
-                                "name": file,
-                                "path": rel_path,
-                                "database": db_source,
-                                "html_url": html_url,
-                                "raw_url": raw_url
-                            })
-            if local_clone_matches:
-                print(f"Found {len(local_clone_matches)} local AutoEq clone matches for '{headphone_name}'.")
-                return local_clone_matches
 
 
     # Format the query for GitHub Code Search API
@@ -135,53 +104,10 @@ def search_autoeq_files(headphone_name: str) -> list[dict]:
         print(f"GitHub Search API call failed: {e}.")
         
 def fetch_frequency_response(raw_url: str, headphone_name: str = "") -> dict:
-    """Retrieves and parses the CSV response data from a raw AutoEq URL or local clone.
+    """Retrieves and parses the CSV response data from a raw AutoEq URL.
     
     Returns a dict with 'frequency' (list) and 'smoothed' (list) values.
     """
-    # If using mock fallback
-    name_clean = headphone_name.lower().strip() if headphone_name else ""
-    if name_clean in MOCK_HEADPHONES and MOCK_HEADPHONES[name_clean]["raw_url"] == raw_url:
-        return {
-            "frequency": MOCK_HEADPHONES[name_clean]["frequencies"],
-            "smoothed": MOCK_HEADPHONES[name_clean]["smoothed"]
-        }
-        
-    # Try reading locally from AutoEq clone if present
-    autoeq_dir = find_local_autoeq_dir()
-    if autoeq_dir and "results/" in raw_url:
-        parts = raw_url.split("/results/")
-        if len(parts) > 1:
-            rel_path = urllib.parse.unquote(parts[1])
-            local_path = os.path.join(autoeq_dir, "results", rel_path)
-            if os.path.exists(local_path):
-                try:
-                    print(f"Reading CSV locally from: {local_path}")
-                    with open(local_path, "r", encoding="utf-8") as f:
-                        content = f.read()
-                    
-                    frequencies = []
-                    smoothed_responses = []
-                    reader = csv.reader(content.splitlines())
-                    header = next(reader)
-                    try:
-                        freq_idx = header.index("frequency")
-                        smoothed_idx = header.index("smoothed")
-                    except ValueError:
-                        freq_idx, smoothed_idx = 0, 2
-                    for row in reader:
-                        if len(row) > max(freq_idx, smoothed_idx):
-                            try:
-                                frequencies.append(float(row[freq_idx]))
-                                smoothed_responses.append(float(row[smoothed_idx]))
-                            except ValueError:
-                                continue
-                    return {
-                        "frequency": frequencies,
-                        "smoothed": smoothed_responses
-                    }
-                except Exception as local_err:
-                    print(f"Failed to read local copy at {local_path}: {local_err}. Trying online.")
                     
     headers = {
         "User-Agent": "HearingTestCalibrationAgent/1.0"
