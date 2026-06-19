@@ -40,7 +40,7 @@ def search_autoeq_files(headphone_name: str) -> list[dict]:
     
     name_clean = headphone_name.lower().strip()
     
-    # 1. Try local JSON database search first (fast, offline, deterministic)
+    # Lookup model in local JSON database 
     local_matches = []
     for key, info in LOCAL_DATABASE.items():
         if name_clean == key or name_clean in key or key in name_clean:

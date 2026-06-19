@@ -22,7 +22,7 @@ import streamlit as st
 # variable (local) to avoid hardcoding it in public source code.
 # Set SENDER_EMAIL in .streamlit/secrets.toml or as an env var.
 # Version string for the app GUI and log files.
-DEMO_UPDATED = 'Version 7.0.1, 28 May 2026'
+DEMO_UPDATED = 'Version 7.1.2, 19 June 2026'
 # Determine the preferred stimuli directory.
 PREFERRED_STIMULI_DIR = ('local_stimuli' if
                          os.path.isdir('local_stimuli') else 'stimuli')
@@ -53,7 +53,7 @@ PTA_MAX_TRIALS_PER_EAR = 40  # Stopping condition for adaptive logic.
 # Supported headphone devices for calibrated hearing tests.
 DEVICE_PIXEL_BUDS = 'Google Pixel Buds'
 DEVICE_AIRPODS_PRO2 = 'Apple AirPods Pro 2'
-DEVICE_OTHER = 'Other (Dynamic AI Calibration)'
+DEVICE_OTHER = 'Other (Dynamic Calibration)'
 SUPPORTED_DEVICES = [DEVICE_PIXEL_BUDS, DEVICE_AIRPODS_PRO2, DEVICE_OTHER]
 
 

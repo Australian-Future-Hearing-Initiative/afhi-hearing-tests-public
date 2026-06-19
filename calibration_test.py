@@ -171,28 +171,43 @@ class TestCalibration(unittest.TestCase):
 
   def test_get_device_offset_pixel_buds(self):
     """Test that get_device_offset returns 0.0 for Pixel Buds."""
-    self.assertEqual(calibration.get_device_offset(1000, common.DEVICE_PIXEL_BUDS), 0.0)
+    self.assertEqual(
+        calibration.get_device_offset(1000, common.DEVICE_PIXEL_BUDS), 0.0
+    )
 
   def test_get_device_offset_airpods_pro2(self):
     """Test that get_device_offset returns correct values for AirPods Pro 2."""
-    self.assertEqual(calibration.get_device_offset(1000, common.DEVICE_AIRPODS_PRO2), 3.0)
-    self.assertEqual(calibration.get_device_offset(250, common.DEVICE_AIRPODS_PRO2), -0.4)
+    self.assertEqual(
+        calibration.get_device_offset(1000, common.DEVICE_AIRPODS_PRO2), 3.0
+    )
+    self.assertEqual(
+        calibration.get_device_offset(250, common.DEVICE_AIRPODS_PRO2), -0.4
+    )
 
   def test_get_device_offset_dynamic_other(self):
-    """Test that get_device_offset queries st.session_state.dynamic_offsets for DEVICE_OTHER."""
+    """Test get_device_offset queries session state dynamic offsets."""
     # Test when dynamic_offsets is not in session state (should return 0.0)
     if 'dynamic_offsets' in st.session_state:
       del st.session_state['dynamic_offsets']
-    self.assertEqual(calibration.get_device_offset(1000, common.DEVICE_OTHER), 0.0)
+    self.assertEqual(
+        calibration.get_device_offset(1000, common.DEVICE_OTHER), 0.0
+    )
 
     # Test when dynamic_offsets is present
     st.session_state['dynamic_offsets'] = {1000: 2.5, 250: -1.2}
-    self.assertEqual(calibration.get_device_offset(1000, common.DEVICE_OTHER), 2.5)
-    self.assertEqual(calibration.get_device_offset(250, common.DEVICE_OTHER), -1.2)
-    self.assertEqual(calibration.get_device_offset(500, common.DEVICE_OTHER), 0.0) # not in dict
+    self.assertEqual(
+        calibration.get_device_offset(1000, common.DEVICE_OTHER), 2.5
+    )
+    self.assertEqual(
+        calibration.get_device_offset(250, common.DEVICE_OTHER), -1.2
+    )
+    # Not in dict.
+    self.assertEqual(
+        calibration.get_device_offset(500, common.DEVICE_OTHER), 0.0
+    )
 
   def test_get_device_offset_unsupported_device_raises_error(self):
-    """Test that get_device_offset raises ValueError for unsupported device names."""
+    """Test that get_device_offset raises ValueError for unsupported devices."""
     with self.assertRaises(ValueError):
       calibration.get_device_offset(1000, 'Unsupported Device')
 

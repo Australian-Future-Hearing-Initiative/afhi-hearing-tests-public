@@ -125,7 +125,7 @@ Referenced from [config.py](file:///usr/local/google/home/butterworthnat/HACK/he
 
 ### Development workflow
 1. Create a feature branch from `main`.
-2. Increment the version number in `web_app.py`.
+2. Increment the version number in `common.py`.
 3. Run all tests and ensure they pass before opening a pull request.
 
 ### Testing

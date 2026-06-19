@@ -148,11 +148,13 @@ def demo_button():
 
 def start_button():
   """Displays the start button and handles its functionality."""
-  start_disabled = (st.session_state.pip_state == 'Running')
+  start_disabled = st.session_state.pip_state == 'Running'
   if st.session_state.get('pip_device') == common.DEVICE_OTHER:
-    if st.session_state.get('dynamic_calibrated_device') != st.session_state.get('pip_custom_device'):
+    if (
+        st.session_state.get('dynamic_calibrated_device')
+        != st.session_state.get('pip_custom_device')
+    ):
       start_disabled = True
-      
   if st.button('Start the test', key='pta_start_test',
                icon=':material/play_arrow:',
                disabled=start_disabled):
@@ -376,15 +378,20 @@ def display_settings():
           disabled=settings_disabled
       )
       st.session_state.pip_custom_device = custom_model
-      
+
       calibrated_model = st.session_state.get('dynamic_calibrated_device')
       if calibrated_model != custom_model:
-        st.info('Please run calibration retrieval for this model before starting the test.')
+        st.info(
+            'Please run calibration retrieval for this model before starting'
+            ' the test.'
+        )
         if st.button('Run Calibration Retrieval', key='run_pip_calibration'):
           with st.spinner(f'Running Calibration Agent for "{custom_model}"...'):
             res = get_calibration_factors(custom_model, 'Google Pixel Buds Pro')
             if res['status'] == 'success':
-              offsets_dict = dict(zip(res['frequencies'], res['correction_factors_db']))
+              offsets_dict = dict(
+                  zip(res['frequencies'], res['correction_factors_db'])
+              )
               st.session_state.dynamic_offsets = offsets_dict
               st.session_state.dynamic_calibrated_device = custom_model
               st.session_state.dynamic_cal_res = res

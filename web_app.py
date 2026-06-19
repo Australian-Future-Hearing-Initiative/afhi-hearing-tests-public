@@ -48,14 +48,14 @@ def reset_session_state():
   audio_container = st.session_state.audio_container
   app_target_audience = st.session_state.app_target_audience
   is_running_locally = st.session_state.is_running_locally
-  
+
   # Preserve calibration settings across demo resets
   dynamic_offsets = st.session_state.get('dynamic_offsets')
   dynamic_calibrated_device = st.session_state.get('dynamic_calibrated_device')
   dynamic_cal_res = st.session_state.get('dynamic_cal_res')
   pta_custom_device = st.session_state.get('pta_custom_device')
   pip_custom_device = st.session_state.get('pip_custom_device')
-  
+
   # Clear everything.
   st.session_state.clear()
   # Restore essential variables.
@@ -63,7 +63,7 @@ def reset_session_state():
   st.session_state.audio_container = audio_container
   st.session_state.app_target_audience = app_target_audience
   st.session_state.is_running_locally = is_running_locally
-  
+
   # Restore calibration variables
   if dynamic_offsets is not None:
     st.session_state.dynamic_offsets = dynamic_offsets
@@ -75,7 +75,7 @@ def reset_session_state():
     st.session_state.pta_custom_device = pta_custom_device
   if pip_custom_device is not None:
     st.session_state.pip_custom_device = pip_custom_device
-    
+
   st.session_state.initial_state_set = True
 
 

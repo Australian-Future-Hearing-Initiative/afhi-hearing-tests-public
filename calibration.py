@@ -153,7 +153,10 @@ def get_device_offset(frequency_hz: int, device: str) -> float:
     return AIRPODS_PRO2_OFFSET.get(frequency_hz, 0.0)
   elif device == common.DEVICE_OTHER:
     # Use dynamically retrieved calibration offset from session state
-    if 'dynamic_offsets' in st.session_state and st.session_state.dynamic_offsets:
+    if (
+        'dynamic_offsets' in st.session_state
+        and st.session_state.dynamic_offsets
+    ):
       return st.session_state.dynamic_offsets.get(frequency_hz, 0.0)
     return 0.0
   else:
