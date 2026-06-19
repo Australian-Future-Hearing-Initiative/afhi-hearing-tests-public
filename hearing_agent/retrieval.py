@@ -17,47 +17,6 @@ except Exception as e:
     print(f"Warning: Failed to load local headphone database from {db_path}: {e}")
     LOCAL_DATABASE = {}
 
-
-# Mock database for offline testing in sandboxed environments
-MOCK_HEADPHONES = {
-    "apple airpods pro": {
-        "source": "oratory1990",
-        "form_factor": "in-ear",
-        "frequencies": [250, 500, 1000, 2000, 3000, 4000, 6000, 8000],
-        "smoothed": [-0.5, -0.1, 0.3, 1.2, 0.5, -2.0, -3.5, -4.5],
-        "raw_url": "https://raw.githubusercontent.com/jaakkopasanen/AutoEq/master/results/oratory1990/harman_in-ear_2019v2/Apple%20AirPods%20Pro/Apple%20AirPods%20Pro.csv"
-    },
-    "google pixel buds pro": {
-        "source": "oratory1990",
-        "form_factor": "in-ear",
-        "frequencies": [250, 500, 1000, 2000, 3000, 4000, 6000, 8000],
-        "smoothed": [-0.2, 0.2, 0.5, 1.5, 0.8, -1.0, -2.0, -3.0],
-        "raw_url": "https://raw.githubusercontent.com/jaakkopasanen/AutoEq/master/results/oratory1990/harman_in-ear_2019v2/Google%20Pixel%20Buds%20Pro/Google%20Pixel%20Buds%20Pro.csv"
-    },
-    "sony wh-1000xm4": {
-        "source": "oratory1990",
-        "form_factor": "over-ear",
-        "frequencies": [250, 500, 1000, 2000, 3000, 4000, 6000, 8000],
-        "smoothed": [1.5, 0.8, -0.2, -1.0, -2.0, -3.5, -2.5, -1.5],
-        "raw_url": "https://raw.githubusercontent.com/jaakkopasanen/AutoEq/master/results/oratory1990/over-ear/Sony%20WH-1000XM4/Sony%20WH-1000XM4.csv"
-    },
-    "sennheiser hd 600": {
-        "source": "oratory1990",
-        "form_factor": "over-ear",
-        "frequencies": [250, 500, 1000, 2000, 3000, 4000, 6000, 8000],
-        "smoothed": [0.1, -0.2, -0.5, 0.8, 0.2, -1.2, -1.8, -2.5],
-        "raw_url": "https://raw.githubusercontent.com/jaakkopasanen/AutoEq/master/results/oratory1990/over-ear/Sennheiser%20HD%20600/Sennheiser%20HD%20600.csv"
-    },
-    "shokz openrun": {
-        "source": "crinacle",
-        "form_factor": "bone-conduction",
-        "frequencies": [250, 500, 1000, 2000, 3000, 4000, 6000, 8000],
-        "smoothed": [-10.0, -8.0, -5.0, -2.0, -3.0, -4.0, -8.0, -12.0],
-        "raw_url": "https://raw.githubusercontent.com/jaakkopasanen/AutoEq/master/results/crinacle/ears-711_harman_over-ear_2018/Shokz%20OpenRun/Shokz%20OpenRun.csv"
-    }
-}
-
-
 def is_bone_conduction_device(name: str) -> bool:
     """Checks if a headphone model name indicates bone conduction."""
     if not name:
@@ -71,22 +30,8 @@ def github_to_raw_url(html_url: str) -> str:
     # -> https://raw.githubusercontent.com/jaakkopasanen/AutoEq/master/results/oratory1990/...
     return html_url.replace("github.com", "raw.githubusercontent.com").replace("/blob/", "/")
 
-def find_local_autoeq_dir() -> str | None:
-    """Helper to locate the AutoEq clone directory in the workspace."""
-    current_dir = os.path.dirname(os.path.abspath(__file__))
-    temp_dir = current_dir
-    for _ in range(4):
-        candidate = os.path.join(temp_dir, "AutoEq")
-        if os.path.isdir(candidate):
-            return candidate
-        temp_dir = os.path.dirname(temp_dir)
-    candidate = os.path.join(os.getcwd(), "AutoEq")
-    if os.path.isdir(candidate):
-        return candidate
-    return None
-
 def search_autoeq_files(headphone_name: str) -> list[dict]:
-    """Searches the local JSON database, local AutoEq clone, and GitHub Code Search API for a headphone model name.
+    """Searches the local JSON database, and GitHub Code Search API for a headphone model name.
     
     Returns a list of dicts with keys: 'name', 'path', 'database', 'html_url', 'raw_url'
     """
@@ -187,20 +132,8 @@ def search_autoeq_files(headphone_name: str) -> list[dict]:
             
     except Exception as e:
         # Fallback to local mock database if network is offline/unavailable
-        print(f"GitHub Search API call failed: {e}. Falling back to offline dictionary search.")
-        matches = []
-        for mock_name, mock_info in MOCK_HEADPHONES.items():
-            # If the user model name is in mock_name or vice versa
-            if name_clean in mock_name or mock_name in name_clean:
-                matches.append({
-                    "name": f"{mock_name}.csv",
-                    "path": f"results/{mock_info['source']}/{mock_info['form_factor']}/{mock_name}/{mock_name}.csv",
-                    "database": mock_info["source"],
-                    "html_url": mock_info["raw_url"].replace("raw.githubusercontent.com", "github.com").replace("/master/", "/blob/master/"),
-                    "raw_url": mock_info["raw_url"]
-                })
-        return matches
-
+        print(f"GitHub Search API call failed: {e}.")
+        
 def fetch_frequency_response(raw_url: str, headphone_name: str = "") -> dict:
     """Retrieves and parses the CSV response data from a raw AutoEq URL or local clone.
     
@@ -288,12 +221,4 @@ def fetch_frequency_response(raw_url: str, headphone_name: str = "") -> dict:
             
     except Exception as e:
         print(f"Failed to fetch CSV data from {raw_url}: {e}")
-        # Secondary fallback using matching mock name
-        for mock_name, mock_info in MOCK_HEADPHONES.items():
-            if mock_info["raw_url"] == raw_url or (name_clean and name_clean in mock_name):
-                print(f"Found offline mock backup for raw_url/name: {mock_name}")
-                return {
-                    "frequency": mock_info["frequencies"],
-                    "smoothed": mock_info["smoothed"]
-                }
         raise e
