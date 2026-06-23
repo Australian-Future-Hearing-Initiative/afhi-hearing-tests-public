@@ -1,25 +1,14 @@
 import numpy as np
+from autoeq.frequency_response import FrequencyResponse
 from .config import AUDIOMETRY_FREQUENCIES, DATABASE_PRIORITY, MAX_CORRECTION_DB, MIN_CORRECTION_DB, VETTING_DISCREPANCY_THRESHOLD_DB
 
-def interpolate_response(freqs: list, responses: list, target_freqs: list = AUDIOMETRY_FREQUENCIES) -> np.ndarray:
-    """Interpolates frequency response values at target frequencies in log space."""
-    if not freqs or not responses:
-        raise ValueError("Frequency response data cannot be empty.")
-    
-    # Audio frequencies are interpolated logarithmically
-    log_freqs = np.log10(freqs)
-    log_targets = np.log10(target_freqs)
-    
-    return np.interp(log_targets, log_freqs, responses)
-
-def vet_and_combine_responses(retrieved_data: list[dict]) -> tuple[np.ndarray, dict]:
-    """Vets response data from multiple sources.
+def vet_and_combine_responses(retrieved_data: list[FrequencyResponse]) -> tuple[np.ndarray, dict]:
+    """Vets response data from multiple FrequencyResponse sources.
     
     Checks for similarity:
     - If similar (std_dev <= threshold), returns the average consensus.
     - If dissimilar, selects the highest priority database and returns details + warning.
     
-    Input format: list of dicts with keys: 'database', 'frequency', 'smoothed'
     Returns:
     - vetted_responses: np.ndarray of response values at target frequencies.
     - metadata: dict containing information about selection, sources, and warning flags.
@@ -27,13 +16,17 @@ def vet_and_combine_responses(retrieved_data: list[dict]) -> tuple[np.ndarray, d
     if not retrieved_data:
         raise ValueError("No response data available for vetting.")
         
-    # Interpolate all source responses at target frequencies
+    # Interpolate all source responses at target frequencies using autoeq FrequencyResponse
     interpolated_curves = {}
-    for entry in retrieved_data:
-        db_name = entry["database"]
+    for fr in retrieved_data:
+        db_name = getattr(fr, "database", "unknown")
         try:
-            curve = interpolate_response(entry["frequency"], entry["smoothed"])
-            interpolated_curves[db_name] = curve
+            # Create a temporary FrequencyResponse with smoothed values as raw, so we can interpolate it
+            # This is necessary because autoeq's interpolate() method does not interpolate the 'smoothed' field
+            # and resets it. By placing smoothed data into raw, we can safely interpolate it.
+            temp_fr = FrequencyResponse(name="temp", frequency=fr.frequency, raw=fr.smoothed)
+            temp_fr.interpolate(AUDIOMETRY_FREQUENCIES)
+            interpolated_curves[db_name] = temp_fr.raw
         except Exception as e:
             print(f"Warning: Failed to interpolate response for database {db_name}: {e}")
             continue

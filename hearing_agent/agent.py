@@ -40,41 +40,16 @@ def get_calibration_factors(user_headphone: str, baseline_headphone: str) -> dic
         # 2. Retrieve user headphone data
         user_files = search_autoeq_files(user_headphone)
         if not user_files:
-            print(f"No local database or API match for '{user_headphone}'. Invoking AI Agent fallback...")
-            try:
-                agent_query = (
-                    f"Search and retrieve the frequency response for '{user_headphone}' "
-                    f"and calculate calibration offsets relative to '{baseline_headphone}'."
-                )
-                agent_res_text = asyncio.run(run_calibration_agent(agent_query))
-                
-                json_match = re.search(r'\{.*\}', agent_res_text, re.DOTALL)
-                if json_match:
-                    agent_data = json.loads(json_match.group(0))
-                    if agent_data.get("gain_offsets_db"):
-                        results["correction_factors_db"] = agent_data["gain_offsets_db"]
-                        results["raw_correction_factors_db"] = agent_data.get("gain_offsets_db")
-                        results["user_sources_used"] = ["ai_agent_research"]
-                        results["user_selected_source"] = "ai_agent_research"
-                        results["bone_conduction_warning"] = agent_data.get("bone_conduction", False)
-                        results["status"] = "success"
-                        return results
-            except Exception as agent_err:
-                print(f"AI Agent fallback failed: {agent_err}")
-                
             results["error_message"] = f"Could not find frequency response data for user headphone: '{user_headphone}'."
             return results
-
             
         user_responses = []
         for file_info in user_files:
             try:
                 resp = fetch_frequency_response(file_info["raw_url"], headphone_name=user_headphone)
-                user_responses.append({
-                    "database": file_info["database"],
-                    "frequency": resp["frequency"],
-                    "smoothed": resp["smoothed"]
-                })
+                # Attach database as attribute for vetting selection
+                resp.database = file_info["database"]
+                user_responses.append(resp)
             except Exception as e:
                 print(f"Warning: Failed to fetch CSV from {file_info['raw_url']}: {e}")
                 continue
@@ -103,11 +78,8 @@ def get_calibration_factors(user_headphone: str, baseline_headphone: str) -> dic
             for file_info in baseline_files:
                 try:
                     resp = fetch_frequency_response(file_info["raw_url"], headphone_name=baseline_headphone)
-                    baseline_responses.append({
-                        "database": file_info["database"],
-                        "frequency": resp["frequency"],
-                        "smoothed": resp["smoothed"]
-                    })
+                    resp.database = file_info["database"]
+                    baseline_responses.append(resp)
                 except Exception as e:
                     print(f"Warning: Failed to fetch baseline CSV: {e}")
                     continue
@@ -177,9 +149,6 @@ async def run_calibration_agent(user_query: str) -> str:
     final_response = "No response from agent."
     
     async for event in runner.run_async(user_id="streamlit_user", session_id="session_001", new_message=content):
-        # In ADK python, we can check if it's the final output event
-        # In some versions, events are dicts or have type attributes
-        # Let's print event details or check for final response
         if hasattr(event, 'is_final_response') and event.is_final_response():
             final_response = event.message.content.parts[0].text
         elif isinstance(event, dict) and event.get("type") == "final_response":
