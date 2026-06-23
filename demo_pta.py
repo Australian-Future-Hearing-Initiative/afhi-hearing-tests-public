@@ -503,41 +503,93 @@ def display_settings():
     if device == common.DEVICE_AIRPODS_PRO2:
       st.caption('Ensure all Hearing Assistance features are disabled.')
     elif device == common.DEVICE_OTHER:
-      custom_model = st.text_input(
-          'Custom headphone model name:',
-          value=st.session_state.get('pta_custom_device', 'Sony WH-1000XM4'),
-          disabled=settings_disabled
-      )
-      st.session_state.pta_custom_device = custom_model
-
-      calibrated_model = st.session_state.get('dynamic_calibrated_device')
-      if calibrated_model != custom_model:
-        st.info(
-            'Please run calibration retrieval for this model before starting'
-            ' the test.'
-        )
-        if st.button('Run Calibration Retrieval', key='run_pta_calibration'):
-          with st.spinner(f'Running Calibration Agent for "{custom_model}"...'):
-            res = get_calibration_factors(custom_model, 'Google Pixel Buds Pro')
-            if res['status'] == 'success':
-              offsets_dict = dict(
-                  zip(res['frequencies'], res['correction_factors_db'])
-              )
-              st.session_state.dynamic_offsets = offsets_dict
-              st.session_state.dynamic_calibrated_device = custom_model
-              st.session_state.dynamic_cal_res = res
-              st.success(f'Successfully calibrated: {custom_model}!')
-              st.rerun()
-            else:
-              st.error(f"Calibration failed: {res['error_message']}")
+      # Load the AutoEq index
+      entries = common.get_autoeq_index()
+      if not entries:
+        st.error("Failed to load AutoEq headphone database. Please check your internet connection.")
       else:
-        res = st.session_state.dynamic_cal_res
-        st.success(f'Calibrated Device: {calibrated_model}')
-        st.write(f"Vetted Source: {res['user_selected_source']}")
-        if res['bone_conduction_warning']:
-          st.warning('⚠️ Bone Conduction Detected. Bypasses middle ear!')
-        if res.get('vetting_warning'):
-          st.info(f"⚠️ {res['vetting_warning']}")
+        # Compute uniques (recommended source only)
+        uniques = []
+        seen_names = set()
+        for entry in entries:
+          if entry['name'] not in seen_names:
+            uniques.append(entry)
+            seen_names.add(entry['name'])
+
+        # Filter toggle
+        search_mode = st.radio(
+            "Database filter:",
+            options=["uniques", "all"],
+            index=0,
+            horizontal=True,
+            help="uniques: recommended source only | all: all measurement sources",
+            disabled=settings_disabled
+        )
+
+        options_list = uniques if search_mode == "uniques" else entries
+
+        # Try to find the index of the previously selected custom device
+        default_custom = st.session_state.get('pta_custom_device', 'Sony WH-1000XM4')
+        default_index = 0
+        for idx, entry in enumerate(options_list):
+          if entry['name'] == default_custom:
+            default_index = idx
+            break
+
+        def format_label(entry):
+          label = f"{entry['name']} (by {entry['source']}"
+          if entry['rig']:
+            label += f" on {entry['rig']})"
+          else:
+            label += ")"
+          return label
+
+        selected_entry = st.selectbox(
+            'Select headphone model:',
+            options=options_list,
+            index=default_index,
+            format_func=format_label,
+            disabled=settings_disabled
+        )
+
+        if selected_entry:
+          custom_model = selected_entry['name']
+          st.session_state.pta_custom_device = custom_model
+          
+          # Construct raw URL
+          path_parts = selected_entry['path'].split('/')
+          last_part = path_parts[-1]
+          raw_url = f"https://raw.githubusercontent.com/jaakkopasanen/AutoEq/master/results/{selected_entry['path']}/{last_part}.csv"
+          st.session_state.pta_custom_device_url = raw_url
+
+          calibrated_model = st.session_state.get('dynamic_calibrated_device')
+          if calibrated_model != custom_model:
+            st.info(
+                f'Please run calibration retrieval for "{custom_model}" before starting'
+                ' the test.'
+            )
+            if st.button('Run Calibration Retrieval', key='run_pta_calibration'):
+              with st.spinner(f'Running Calibration Agent for "{custom_model}"...'):
+                res = get_calibration_factors(raw_url, 'Google Pixel Buds Pro')
+                if res['status'] == 'success':
+                  offsets_dict = dict(
+                      zip(res['frequencies'], res['correction_factors_db'])
+                  )
+                  st.session_state.dynamic_offsets = offsets_dict
+                  st.session_state.dynamic_calibrated_device = custom_model
+                  st.session_state.dynamic_cal_res = res
+                  st.success(f'Successfully calibrated: {custom_model}!')
+                  st.rerun()
+                else:
+                  st.error(f"Calibration failed: {res['error_message']}")
+          else:
+            res = st.session_state.dynamic_cal_res
+            st.success(f'Calibrated Device: {calibrated_model}')
+            st.write(f"Vetted Source: {res['user_selected_source']}")
+            if res['bone_conduction_warning']:
+              st.warning('⚠️ Bone Conduction Detected. Bypasses middle ear!')
+            if res.get('vetting_warning'):
+              st.info(f"⚠️ {res['vetting_warning']}")
 
   else:
     st.session_state.pta_device = common.DEVICE_PIXEL_BUDS

@@ -1,4 +1,4 @@
 from .config import AUDIOMETRY_FREQUENCIES
 from .retrieval import is_bone_conduction_device, search_autoeq_files, fetch_frequency_response
 from .calibration_pipeline import vet_and_combine_responses, calculate_calibration_correction
-from .agent import get_calibration_factors, root_agent, run_calibration_agent
+from .agent import get_calibration_factors

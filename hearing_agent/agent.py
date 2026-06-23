@@ -1,11 +1,3 @@
-import json
-import asyncio
-import re
-from google.adk.agents import Agent
-from google.adk.sessions import InMemorySessionService
-from google.adk.runners import Runner
-from google.genai import types
-
 from .retrieval import search_autoeq_files, fetch_frequency_response, is_bone_conduction_device
 from .calibration_pipeline import vet_and_combine_responses, calculate_calibration_correction
 from .config import AUDIOMETRY_FREQUENCIES
@@ -14,8 +6,8 @@ def get_calibration_factors(user_headphone: str, baseline_headphone: str) -> dic
     """Retrieves frequency responses and calculates calibration correction factors.
     
     Args:
-        user_headphone (str): The model name of the user's headphone (e.g., 'Sony WH-1000XM4').
-        baseline_headphone (str): The reference headphone used for calibration ('Apple AirPods Pro' or 'Google Pixel Buds Pro').
+        user_headphone (str): The model name of the user's headphone (e.g., 'Sony WH-1000XM4') or a direct raw URL.
+        baseline_headphone (str): The reference headphone used for calibration ('Apple AirPods Pro' or 'Google Pixel Buds Pro') or a direct raw URL.
         
     Returns:
         dict: A dictionary containing correction factors, vetting details, and flags.
@@ -32,13 +24,24 @@ def get_calibration_factors(user_headphone: str, baseline_headphone: str) -> dic
         "error_message": None
     }
     
-    # 1. Bone conduction check
-    if is_bone_conduction_device(user_headphone):
-        results["bone_conduction_warning"] = True
+    # 1. Bone conduction check (only if not a direct URL)
+    if not (user_headphone.startswith("http://") or user_headphone.startswith("https://")):
+        if is_bone_conduction_device(user_headphone):
+            results["bone_conduction_warning"] = True
         
     try:
         # 2. Retrieve user headphone data
-        user_files = search_autoeq_files(user_headphone)
+        if user_headphone.startswith("http://") or user_headphone.startswith("https://"):
+            user_files = [{
+                "name": user_headphone.split("/")[-1].replace(".csv", ""),
+                "path": user_headphone,
+                "database": "direct_url",
+                "html_url": user_headphone,
+                "raw_url": user_headphone
+            }]
+        else:
+            user_files = search_autoeq_files(user_headphone)
+
         if not user_files:
             results["error_message"] = f"Could not find frequency response data for user headphone: '{user_headphone}'."
             return results
@@ -66,7 +69,17 @@ def get_calibration_factors(user_headphone: str, baseline_headphone: str) -> dic
             results["vetting_warning"] = user_vetting_metadata["warning"]
 
         # 4. Retrieve baseline headphone data
-        baseline_files = search_autoeq_files(baseline_headphone)
+        if baseline_headphone.startswith("http://") or baseline_headphone.startswith("https://"):
+            baseline_files = [{
+                "name": baseline_headphone.split("/")[-1].replace(".csv", ""),
+                "path": baseline_headphone,
+                "database": "direct_url",
+                "html_url": baseline_headphone,
+                "raw_url": baseline_headphone
+            }]
+        else:
+            baseline_files = search_autoeq_files(baseline_headphone)
+            
         if not baseline_files:
             # Fallback to default baseline curve (flat/0 dB) if baseline model not found
             print(f"Warning: Baseline headphone '{baseline_headphone}' not found in database. Using flat reference.")
@@ -113,48 +126,3 @@ def get_calibration_factors(user_headphone: str, baseline_headphone: str) -> dic
         results["error_message"] = f"Calibration calculation pipeline failed: {str(e)}"
         
     return results
-
-
-# Define ADK Agent
-root_agent = Agent(
-    name="HeadphoneCalibrationAgent",
-    model="gemini-flash-latest",
-    description="Calculates correction factors for audiometry headphones by querying AutoEq databases.",
-    instruction=(
-        "You are an expert Audio Data Scientist and Clinical Audiology Agent. "
-        "Your task is to analyze user requests to calibrate headphones for a clinical hearing test. "
-        "Use the 'get_calibration_factors' tool to fetch frequency responses and calculate calibration corrections. "
-        "You must explain the results in a friendly, scientific manner, detailing: \n"
-        "1. The databases searched and how you verified data consistency (Vetting).\n"
-        "2. Any warnings, such as bone conduction devices (which require separate calibration) or output clipping.\n"
-        "3. The calculated correction factors across frequencies (250Hz, 500Hz, 1000Hz, 2000Hz, 4000Hz, 8000Hz).\n"
-        "Always output the calibration results in a clear code block containing the raw JSON configuration."
-    ),
-    tools=[get_calibration_factors]
-)
-
-# Async runner helper function for integration
-async def run_calibration_agent(user_query: str) -> str:
-    """Helper to run the ADK Agent asynchronously and return its final text response."""
-    session_service = InMemorySessionService()
-    await session_service.create_session(app_name="hearing_app", user_id="streamlit_user", session_id="session_001")
-    
-    runner = Runner(
-        agent=root_agent,
-        app_name="hearing_app",
-        session_service=session_service
-    )
-    
-    content = types.Content(role='user', parts=[types.Part(text=user_query)])
-    final_response = "No response from agent."
-    
-    async for event in runner.run_async(user_id="streamlit_user", session_id="session_001", new_message=content):
-        if hasattr(event, 'is_final_response') and event.is_final_response():
-            final_response = event.message.content.parts[0].text
-        elif isinstance(event, dict) and event.get("type") == "final_response":
-            final_response = event.get("content", "")
-        elif hasattr(event, 'message') and event.message and hasattr(event.message, 'content'):
-            if event.message.content and event.message.content.parts:
-                final_response = event.message.content.parts[0].text
-                
-    return final_response
