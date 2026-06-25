@@ -58,7 +58,7 @@ To deliver accurate hearing tests across different headphone models, the applica
 * **Implementation**: A dedicated, hardcoded dictionary `AIRPODS_PRO2_OFFSET` in `calibration.py` defines a precise correction offset (in dB) for each standard audiometry frequency.
 * **Requirement**: For these offsets to remain valid, the user **must** disable all active DSP "Hearing Assistance" or active noise cancellation features (e.g., Conversation Boost, Loud Noise Reduction, Personalized Spatial Audio, or Adaptive Audio) on their AirPods.
 
-#### C. Other (Dynamic Calibration)
+#### C. Other (Untested Calibration)
 * **Calibration Type**: **Dynamic Best-Effort (AutoEq-Relative)**.
 * **Mechanism**: When a user inputs a custom headphone model (e.g., *Sony WH-1000XM4*), the app launches a dynamic data retrieval and processing pipeline to calculate relative calibration offsets against the baseline.
 * **Accuracy Notice**: This method is a best-effort approximation. It is **less accurate** than the dedicated laboratory calibrations for the Google Pixel Buds and Apple AirPods Pro 2 because it uses relative database shapes, cannot account for absolute hardware sensitivity/amplifier differences, and is subject to fitting/seal variations.
@@ -123,7 +123,7 @@ graph TD
     AP_Calc --> Apply
     
     %% Dynamic Path
-    DeviceSelect -->|Other Dynamic Calibration| Other[Other: Input Custom Model name]
+    DeviceSelect -->|Other Untested Calibration| Other[Other: Input Custom Model name]
     Other --> SearchDb{Is model in local database?}
     
     SearchDb -->|Yes| LocalLoad[Load response curve from headphone_database.json]

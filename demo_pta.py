@@ -506,7 +506,7 @@ def display_settings():
       # Load the AutoEq index
       entries = common.get_autoeq_index()
       if not entries:
-        st.error("Failed to load AutoEq headphone database. Please check your internet connection.")
+        st.error("Failed to load AutoEq headphone database. File a bug...")
       else:
         # Compute uniques (recommended source only)
         uniques = []
