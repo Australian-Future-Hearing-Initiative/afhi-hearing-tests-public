@@ -45,8 +45,8 @@ def _play_short_silence():
       wavfile.write(tmpf.name, demo_pta.FS_HZ, stereo_silence)
       common.autoplay_audio(tmpf.name)
   except Exception as e: # pylint: disable=broad-exception-caught
-    st.error(f"Error playing silence: {e}")
-    print(f"ERROR: Could not play silence file: {e}")
+    st.error(f'Error playing silence: {e}')
+    print(f'ERROR: Could not play silence file: {e}')
 
 def show_options():
   """Displays the options for the tone generator demo."""
@@ -203,7 +203,7 @@ def generate_button_grid():
     background_hue = 220 - hue_shift  # Blue-ish (hue 240) to red (hue 0).
     if background_hue < 0:
       background_hue = 0
-    background_color = f"hsl({background_hue}, 60%, 80%)"
+    background_color = f'hsl({background_hue}, 60%, 80%)'
     button_css += f"""
     div.stHorizontalBlock:nth-child({row_ind + row_offset})
     div.stButton > button[kind="secondary"] {{

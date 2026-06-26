@@ -405,16 +405,16 @@ def create_vcv_report(
       found_label = next((l for l in consonant_labels if l in base_name), None)
 
       if not found_label:
-        print(f"Skipping {base_name}, could not determine label.")
+        print(f'Skipping {base_name}, could not determine label.')
         continue
 
       synth_path = os.path.join(synthetic_dir, f'{found_label}.wav')
       if not os.path.exists(synth_path):
-        print(f"Skipping {found_label}, synthetic file not found.")
+        print(f'Skipping {found_label}, synthetic file not found.')
         continue
 
-      print(f"  ({i+1}/{len(all_human_files)}) "
-            f"Processing: {found_label.upper()}")
+      print(f'  ({i+1}/{len(all_human_files)}) '
+            f'Processing: {found_label.upper()}')
 
       # --- 1. Data Processing ---
       # Waveform data
@@ -560,7 +560,7 @@ def create_vcv_report(
       pdf.savefig(fig)
       plt.close(fig)
 
-    print(f"\nReport generation complete. {len(all_human_files)} pages saved.")
+    print(f'\nReport generation complete. {len(all_human_files)} pages saved.')
 
 
 def get_wav_rms(file_path: str) -> float:

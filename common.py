@@ -7,9 +7,11 @@ from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 import io
 import os
+import re
 import smtplib
 import subprocess
 import tempfile
+import urllib.request
 import zipfile
 
 import matplotlib.pyplot as plt
@@ -60,39 +62,42 @@ SUPPORTED_DEVICES = [DEVICE_PIXEL_BUDS, DEVICE_AIRPODS_PRO2, DEVICE_OTHER]
 @st.cache_data(ttl=86400) # Cache for 24 hours
 def get_autoeq_index() -> list[dict]:
   """Downloads and parses the full AutoEq results index from GitHub.
-  
+
   Returns a list of dicts, each with keys: 'name', 'path', 'source', 'rig'
   """
-  import re
-  import urllib.request
-  url = "https://raw.githubusercontent.com/jaakkopasanen/AutoEq/master/results/INDEX.md"
+  url = (
+      'https://raw.githubusercontent.com/'
+      'jaakkopasanen/AutoEq/master/results/INDEX.md'
+  )
   headers = {
-      "User-Agent": "HearingTestCalibrationAgent/1.0"
+      'User-Agent': 'HearingTestCalibrationAgent/1.0'
   }
   try:
     req = urllib.request.Request(url, headers=headers)
     with urllib.request.urlopen(req, timeout=10) as response:
       content = response.read().decode('utf-8')
-      
+
     # Regex to parse the markdown index lines
-    # Example: - [1MORE Piston Fit](./Rtings/HMS%20II.3%20in-ear/1MORE%20Piston%20Fit) by Rtings on HMS II.3
+    # Example: - [1MORE Piston Fit]
+    # (./Rtings/HMS%20II.3%20in-ear/1MORE%20Piston%20Fit) by Rtings on HMS II.3
     pattern = re.compile(
-        r'^-\s+\[(?P<name>[^\]]+)\]\(\./(?P<path>.*?)\)\s+by\s+(?P<source>.*?)(?:\s+on\s+(?P<rig>[^\n]+))?$',
+        r'^-\s+\[(?P<name>[^\]]+)\]\(\./(?P<path>.*?)\)\s+by\s+'
+        r'(?P<source>.*?)(?:\s+on\s+(?P<rig>[^\n]+))?$',
         re.MULTILINE
     )
-    
+
     entries = []
     for match in pattern.finditer(content):
       gd = match.groupdict()
       entries.append({
-          "name": gd["name"],
-          "path": gd["path"],
-          "source": gd["source"],
-          "rig": gd["rig"] if gd["rig"] else ""
+          'name': gd['name'],
+          'path': gd['path'],
+          'source': gd['source'],
+          'rig': gd['rig'] if gd['rig'] else ''
       })
     return entries
-  except Exception as e:
-    print(f"Failed to fetch AutoEq index: {e}")
+  except Exception as e:  # pylint: disable=broad-exception-caught
+    print(f'Failed to fetch AutoEq index: {e}')
     return []
 
 
@@ -344,7 +349,7 @@ def display_email_results_form(
         <p>Test results for the <b>{test_name}</b> are attached.</p>
         """
         if participant_id:
-          body_html += f"<p>Participant ID: {participant_id}</p>"
+          body_html += f'<p>Participant ID: {participant_id}</p>'
         body_html += """
         <p>Please download and save the attached zip file.</p>
         </body></html>

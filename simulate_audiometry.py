@@ -146,7 +146,7 @@ def run_simulation(selector_obj: StimulusSelector,
       # Single line progress update
       print(f'\r  Trial: {trial}/{num_trials}', end='')
     elif verbosity >= 2:
-      print(f"\n--- Trial {trial}/{num_trials} ---")
+      print(f'\n--- Trial {trial}/{num_trials} ---')
 
     next_freq_hz, next_level_dbhl = selector_obj.next_stimulus(
       results_history, verbosity)
@@ -157,7 +157,7 @@ def run_simulation(selector_obj: StimulusSelector,
       if phase not in phase_starts:
         phase_starts[phase] = trial
         if verbosity >= 2:
-          print(f">>> {phase} Phase Started")
+          print(f'>>> {phase} Phase Started')
 
     threshold = get_interpolated_threshold(next_freq_hz, test_audiogram)
     noisy_threshold = threshold + np.random.normal(0, noise_std_db)

@@ -267,7 +267,7 @@ def _postprocess_stimulus(stimulus_x: np.ndarray) -> tuple[float, float]:
   """
   if stimulus_x.shape != (2,):
     raise ValueError(
-        f"Expected stimulus_x to have shape (2,), got {stimulus_x.shape}"
+        f'Expected stimulus_x to have shape (2,), got {stimulus_x.shape}'
     )
   log2_freq = stimulus_x[0]
   level_dbhl = stimulus_x[1]
@@ -378,7 +378,7 @@ def run_adaptive_test_step(
     else:
       # Normal Phase 1 operation or proposing min_level for the first time.
       if verbosity >= 3:
-        print(f"Proposing {target_freq} Hz at {next_level} dBHL (Descent)")
+        print(f'Proposing {target_freq} Hz at {next_level} dBHL (Descent)')
       # Return stimulus and empty audiogram during initial descent.
       return (target_freq, next_level), estimated_audiogram
 

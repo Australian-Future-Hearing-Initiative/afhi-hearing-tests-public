@@ -523,9 +523,9 @@ def calculate_version2_calibration(
     print('\n--- Outlier Detection ---')
     # Sort for consistent removal and reporting.
     for i in sorted(outlier_indices, reverse=True):
-      print(f"Excluding outlier: {filenames[i]} (Mean error "
-            f"{subject_mean_errors[i]:.2f} dB > threshold "
-            f"{outlier_threshold:.2f} dB)")
+      print(f'Excluding outlier: {filenames[i]} (Mean error '
+            f'{subject_mean_errors[i]:.2f} dB > threshold '
+            f'{outlier_threshold:.2f} dB)')
       # Remove from lists by index.
       dataframes.pop(i)
       filenames.pop(i)
