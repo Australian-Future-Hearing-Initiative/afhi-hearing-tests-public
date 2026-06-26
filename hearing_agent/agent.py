@@ -7,7 +7,7 @@ def get_calibration_factors(user_headphone: str, baseline_headphone: str) -> dic
     
     Args:
         user_headphone (str): The model name of the user's headphone (e.g., 'Sony WH-1000XM4') or a direct raw URL.
-        baseline_headphone (str): The reference headphone used for calibration ('Apple AirPods Pro' or 'Google Pixel Buds Pro') or a direct raw URL.
+        baseline_headphone (str): The reference headphone used for calibration ('Apple AirPods Pro' or 'Google Pixel Buds Pro 2') or a direct raw URL.
         
     Returns:
         dict: A dictionary containing correction factors, vetting details, and flags.

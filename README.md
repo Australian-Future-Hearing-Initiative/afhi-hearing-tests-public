@@ -46,22 +46,22 @@ To deliver accurate hearing tests across different headphone models, the applica
 
 ### 1. Supported Calibration Methods
 
-#### A. Google Pixel Buds (Baseline Device)
+#### A. Google Pixel Buds Pro 2 (Baseline Device)
 * **Calibration Type**: **Absolute Lab-Measured (Gold Standard)**.
-* **Mechanism**: The hearing tests (Hughson-Westlake, Adaptive, and Pip PTA) were designed and empirically validated in a laboratory setting specifically using Google Pixel Buds.
+* **Mechanism**: The hearing tests (Hughson-Westlake, Adaptive, and Pip PTA) were designed and empirically validated in a laboratory setting specifically using Google Pixel Buds Pro 2.
 * **Implementation**: The baseline mapping between **dB HL** (Hearing Level, clinical threshold) and **dB SPL** (Sound Pressure Level, physical acoustic power) is hardcoded in the `dbhl_to_dbspl` function in `calibration.py`. 
 * **Offsets**: No additional offsets are applied (offset = `0.0` dB) because the baseline curves represent absolute physical values for this hardware.
 
 #### B. Apple AirPods Pro 2
 * **Calibration Type**: **Fixed Laboratory Offsets**.
-* **Mechanism**: The acoustic characteristics of the Apple AirPods Pro 2 were physically measured against the Google Pixel Buds in a controlled laboratory using a professional acoustic coupler and sound level meter.
+* **Mechanism**: The acoustic characteristics of the Apple AirPods Pro 2 were physically measured against the Google Pixel Buds Pro 2 in a controlled laboratory using a professional acoustic coupler and sound level meter.
 * **Implementation**: A dedicated, hardcoded dictionary `AIRPODS_PRO2_OFFSET` in `calibration.py` defines a precise correction offset (in dB) for each standard audiometry frequency.
 * **Requirement**: For these offsets to remain valid, the user **must** disable all active DSP "Hearing Assistance" or active noise cancellation features (e.g., Conversation Boost, Loud Noise Reduction, Personalized Spatial Audio, or Adaptive Audio) on their AirPods.
 
 #### C. Other (Untested Calibration)
 * **Calibration Type**: **Dynamic Best-Effort (AutoEq-Relative)**.
 * **Mechanism**: When a user inputs a custom headphone model (e.g., *Sony WH-1000XM4*), the app launches a dynamic data retrieval and processing pipeline to calculate relative calibration offsets against the baseline.
-* **Accuracy Notice**: This method is a best-effort approximation. It is **less accurate** than the dedicated laboratory calibrations for the Google Pixel Buds and Apple AirPods Pro 2 because it uses relative database shapes, cannot account for absolute hardware sensitivity/amplifier differences, and is subject to fitting/seal variations.
+* **Accuracy Notice**: This method is a best-effort approximation. It is **less accurate** than the dedicated laboratory calibrations for the Google Pixel Buds Pro 2 and Apple AirPods Pro 2 because it uses relative database shapes, cannot account for absolute hardware sensitivity/amplifier differences, and is subject to fitting/seal variations.
 
 ### 2. The Dynamic Calibration Pipeline (`hearing_agent/calibration_pipeline.py`)
 
@@ -77,13 +77,13 @@ This projects a headphone's arbitrary measured frequency response from the datab
   ```
 
 #### Step 2: Multi-Database Vetting and Integration
-Measurement databases can differ due to measurement fixtures and target curves. The `vet_and_combine_responses` function resolves differences when data is found in multiple databases (e.g., `oratory1990`, `crinacle`, `rtings`):
+Measurement databases can differ due to measurement fixtures and target curves. The `vet_and_combine_responses` function resolves differences when data is found in multiple databases (e.g., `oratory1990`, `rtings`) from the [AutoEq repo](https://github.com/jaakkopasanen/AutoEq):
 
 ##### Authoritativeness and Priorities
 If the measurement deviation between databases exceeds the discrepancy threshold (**3.0 dB**), the module prefers databases in this order (configured in [config.py](file:///usr/local/google/home/butterworthnat/HACK/hearing/afhi-hearing-tests-public/hearing_agent/config.py)):
 1. `oratory1990` (Most authoritative / professional coupler measurements)
-2. `crinacle`
-3. `rtings`
+2. `rtings`
+3. `other`
 
 #### Step 3: Calibration Correction Calculation
 To calibrate the user's headphones, the system computes the difference between the baseline target and the vetted headphone curve:
@@ -111,7 +111,7 @@ graph TD
     Start[User selects Headphone Device in Streamlit App] --> DeviceSelect{Which Device?}
     
     %% Pixel Buds Path
-    DeviceSelect -->|Google Pixel Buds| PB[Google Pixel Buds]
+    DeviceSelect -->|Google Pixel Buds Pro 2| PB[Google Pixel Buds Pro 2]
     PB --> PB_Calc[Use Absolute Lab Calibration]
     PB_Calc --> PB_Offset[Offset = 0.0 dB]
     PB_Offset --> Apply[Apply Calibration to Output Audio]
@@ -142,9 +142,9 @@ graph TD
     Vet -->|Yes| DevCheck{Max Std Dev > 3.0 dB?}
     
     DevCheck -->|No| Avg[Consensus: Average all databases]
-    DevCheck -->|Yes| Priority[Priority Selection: oratory1990 > crinacle > rtings]
+    DevCheck -->|Yes| Priority[Priority Selection: oratory1990 > rtings > other]
     
-    Single --> GetBaseline[Fetch Baseline 'Google Pixel Buds Pro' AutoEq Curve]
+    Single --> GetBaseline[Fetch Baseline 'Google Pixel Buds Pro 2' AutoEq Curve]
     Avg --> GetBaseline
     Priority --> GetBaseline
     
@@ -166,7 +166,7 @@ Referenced from `config.py`:
 | Parameter | Value | Description |
 | :--- | :--- | :--- |
 | `AUDIOMETRY_FREQUENCIES` | `[250, 500, 1000, 2000, 3000, 4000, 6000, 8000]` | Frequencies tested in hearing tests. |
-| `DATABASE_PRIORITY` | `['oratory1990', 'crinacle', 'rtings']` | Authority hierarchy for source databases. |
+| `DATABASE_PRIORITY` | `['oratory1990', 'rtings']` | Authority hierarchy for source databases. |
 | `MAX_CORRECTION_DB` | `15.0` | Upper limit for boost correction. |
 | `MIN_CORRECTION_DB` | `-15.0` | Lower limit for attenuation correction. |
 | `VETTING_DISCREPANCY_THRESHOLD_DB` | `3.0` | Standard deviation threshold for source discrepancy. |

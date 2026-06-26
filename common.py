@@ -51,7 +51,7 @@ PTA_MAX_LEVEL_DB_HL = 70
 PTA_MAX_TRIALS_PER_EAR = 40  # Stopping condition for adaptive logic.
 
 # Supported headphone devices for calibrated hearing tests.
-DEVICE_PIXEL_BUDS = 'Google Pixel Buds'
+DEVICE_PIXEL_BUDS = 'Google Pixel Buds Pro 2'
 DEVICE_AIRPODS_PRO2 = 'Apple AirPods Pro 2'
 DEVICE_OTHER = 'Other (Untested Calibration)'
 SUPPORTED_DEVICES = [DEVICE_PIXEL_BUDS, DEVICE_AIRPODS_PRO2, DEVICE_OTHER]
@@ -77,7 +77,7 @@ def get_autoeq_index() -> list[dict]:
     # Regex to parse the markdown index lines
     # Example: - [1MORE Piston Fit](./Rtings/HMS%20II.3%20in-ear/1MORE%20Piston%20Fit) by Rtings on HMS II.3
     pattern = re.compile(
-        r'^-\s+\[(?P<name>[^\]]+)\]\(\./(?P<path>[^\)]+)\)\s+by\s+(?P<source>.*?)(?:\s+on\s+(?P<rig>[^\n]+))?$',
+        r'^-\s+\[(?P<name>[^\]]+)\]\(\./(?P<path>.*?)\)\s+by\s+(?P<source>.*?)(?:\s+on\s+(?P<rig>[^\n]+))?$',
         re.MULTILINE
     )
     

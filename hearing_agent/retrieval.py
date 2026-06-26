@@ -41,7 +41,7 @@ def search_autoeq_files(headphone_name: str) -> list[dict]:
                 
             # Regex to parse the markdown index lines
             pattern = re.compile(
-                r'^-\s+\[(?P<name>[^\]]+)\]\(\./(?P<path>[^\)]+)\)\s+by\s+(?P<source>.*?)(?:\s+on\s+(?P<rig>[^\n]+))?$',
+                r'^-\s+\[(?P<name>[^\]]+)\]\(\./(?P<path>.*?)\)\s+by\s+(?P<source>.*?)(?:\s+on\s+(?P<rig>[^\n]+))?$',
                 re.MULTILINE
             )
             

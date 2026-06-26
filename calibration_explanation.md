@@ -10,7 +10,7 @@ The calibration module is responsible for processing, vetting, and matching head
 
 The core pipeline works in three steps:
 1. **Interpolation**: Logarithmic interpolation of frequency response curves to standard test frequencies.
-2. **Vetting & Integration**: Combining or selecting response curves from multiple source databases (e.g., `oratory1990`, `crinacle`, `rtings`).
+2. **Vetting & Integration**: Combining or selecting response curves from multiple source databases (e.g., `oratory1990`, `rtings`).
 3. **Correction Calculation**: Computing safe gain correction factors (in dB) bounded by safety limits.
 
 ---
@@ -57,8 +57,7 @@ graph TD
 ### Authoritativeness and Priorities
 If the measurement deviation between databases exceeds the discrepancy threshold (**3.0 dB**), the module prefers databases in this order (configured in [config.py](file:///usr/local/google/home/butterworthnat/HACK/hearing/afhi-hearing-tests-public/hearing_agent/config.py)):
 1. `oratory1990` (Most authoritative / professional coupler measurements)
-2. `crinacle`
-3. `rtings`
+2. `rtings`
 
 ---
 
@@ -85,7 +84,7 @@ Referenced from [config.py](file:///usr/local/google/home/butterworthnat/HACK/he
 | Parameter | Value | Description |
 | :--- | :--- | :--- |
 | `AUDIOMETRY_FREQUENCIES` | `[250, 500, 1000, 2000, 3000, 4000, 6000, 8000]` | Frequencies tested in hearing tests. |
-| `DATABASE_PRIORITY` | `['oratory1990', 'crinacle', 'rtings']` | Authority hierarchy for source databases. |
+| `DATABASE_PRIORITY` | `['oratory1990', 'rtings']` | Authority hierarchy for source databases. |
 | `MAX_CORRECTION_DB` | `15.0` | Upper limit for boost correction. |
 | `MIN_CORRECTION_DB` | `-15.0` | Lower limit for attenuation correction. |
 | `VETTING_DISCREPANCY_THRESHOLD_DB` | `3.0` | Standard deviation threshold for source discrepancy. |

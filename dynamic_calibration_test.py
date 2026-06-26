@@ -37,7 +37,7 @@ class TestDynamicCalibration(unittest.TestCase):
                 'raw_url': f'mock_{name}_url',
             }
         ]
-        if name in ['Sony WH-1000XM4', 'Google Pixel Buds Pro']
+        if name in ['Sony WH-1000XM4', 'Google Pixel Buds Pro 2']
         else []
     )
 
@@ -48,7 +48,7 @@ class TestDynamicCalibration(unittest.TestCase):
         return create_mock_fr(
             headphone_name, [1.5, 0.8, -0.2, -1.0, -2.0, -3.5, -2.5, -1.5]
         )
-      elif 'Google Pixel Buds Pro' in headphone_name:
+      elif 'Google Pixel Buds Pro 2' in headphone_name:
         return create_mock_fr(
             headphone_name, [-0.2, 0.2, 0.5, 1.5, 0.8, -1.0, -2.0, -3.0]
         )
@@ -57,7 +57,7 @@ class TestDynamicCalibration(unittest.TestCase):
     mock_fetch.side_effect = mock_fetch_impl
 
     user_model = 'Sony WH-1000XM4'
-    baseline = 'Google Pixel Buds Pro'
+    baseline = 'Google Pixel Buds Pro 2'
     res = get_calibration_factors(user_model, baseline)
 
     self.assertEqual(res['user_headphone'], user_model)
@@ -94,7 +94,7 @@ class TestDynamicCalibration(unittest.TestCase):
                 'raw_url': f'mock_{name}_url',
             }
         ]
-        if name in ['Shokz OpenRun', 'Google Pixel Buds Pro']
+        if name in ['Shokz OpenRun', 'Google Pixel Buds Pro 2']
         else []
     )
 
@@ -103,14 +103,14 @@ class TestDynamicCalibration(unittest.TestCase):
       del raw_url  # Unused in mock implementation.
       if 'Shokz OpenRun' in headphone_name:
         return create_mock_fr(headphone_name, [0.0] * 8)
-      elif 'Google Pixel Buds Pro' in headphone_name:
+      elif 'Google Pixel Buds Pro 2' in headphone_name:
         return create_mock_fr(headphone_name, [0.0] * 8)
       raise ValueError(f'Unknown mock URL/headphone: {headphone_name}')
 
     mock_fetch.side_effect = mock_fetch_impl
 
     bc_model = 'Shokz OpenRun'
-    baseline = 'Google Pixel Buds Pro'
+    baseline = 'Google Pixel Buds Pro 2'
     res = get_calibration_factors(bc_model, baseline)
 
     self.assertEqual(res['user_headphone'], bc_model)
@@ -130,7 +130,7 @@ class TestDynamicCalibration(unittest.TestCase):
                 'raw_url': f'mock_{name}_url',
             }
         ]
-        if name in ['ultra sensitive phones', 'Google Pixel Buds Pro']
+        if name in ['ultra sensitive phones', 'Google Pixel Buds Pro 2']
         else []
     )
 
@@ -144,14 +144,14 @@ class TestDynamicCalibration(unittest.TestCase):
             headphone_name,
             [25.0, 30.0, 28.0, 32.0, 25.0, 20.0, 20.0, 20.0],
         )
-      elif 'Google Pixel Buds Pro' in headphone_name:
+      elif 'Google Pixel Buds Pro 2' in headphone_name:
         return create_mock_fr(headphone_name, [0.0] * 8)
       raise ValueError(f'Unknown mock URL/headphone: {headphone_name}')
 
     mock_fetch.side_effect = mock_fetch_impl
 
     sensitive_model = 'ultra sensitive phones'
-    baseline = 'Google Pixel Buds Pro'
+    baseline = 'Google Pixel Buds Pro 2'
     res = get_calibration_factors(sensitive_model, baseline)
 
     self.assertEqual(res['status'], 'success')
@@ -166,7 +166,7 @@ class TestDynamicCalibration(unittest.TestCase):
     mock_search.return_value = []  # not found
 
     res = get_calibration_factors(
-        'Nonexistent Headphone', 'Google Pixel Buds Pro'
+        'Nonexistent Headphone', 'Google Pixel Buds Pro 2'
     )
     self.assertEqual(res['status'], 'error')
     self.assertIn(

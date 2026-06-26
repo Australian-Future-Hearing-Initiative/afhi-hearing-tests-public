@@ -424,7 +424,7 @@ def display_settings():
                   f'Running Calibration Agent for "{custom_model}"...'
               ):
                 res = get_calibration_factors(
-                    custom_model, 'Google Pixel Buds Pro'
+                    custom_model, 'Google Pixel Buds Pro 2'
                 )
                 if res['status'] == 'success':
                   offsets_dict = dict(
