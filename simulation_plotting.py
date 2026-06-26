@@ -166,8 +166,8 @@ def plot_probability_surface(
 
   # DEBUG: Print the range of predicted probabilities.
   print(
-    f"DEBUG: Min/Max predicted probability: "
-    f"{np.nanmin(prob_heard):.4f} / {np.nanmax(prob_heard):.4f}"
+      f'DEBUG: Min/Max predicted probability: '
+      f'{np.nanmin(prob_heard):.4f} / {np.nanmax(prob_heard):.4f}'
   )
 
   # Reshape for plotting.
@@ -178,9 +178,9 @@ def plot_probability_surface(
   expected_len = len(log2_freqs) * len(levels)
   if len(prob_heard) != expected_len:
     raise ValueError(
-      f"Cannot reshape predicted_probs (len {len(prob_heard)}) into grid "
-      f"({len(log2_freqs)} x {len(levels)} = {expected_len}). "
-      f"Mismatch between create_test_grid and smoother output?"
+        f'Cannot reshape predicted_probs (len {len(prob_heard)}) into grid '
+        f'({len(log2_freqs)} x {len(levels)} = {expected_len}). '
+        f'Mismatch between create_test_grid and smoother output?'
     )
   # imshow expects shape (n_levels, n_freqs) for the chosen extent/origin.
   prob_grid = prob_heard.reshape(len(levels), len(log2_freqs))
@@ -483,7 +483,7 @@ def plot_results(
       mae = mae_results_local.get(recon_name)
       label = recon_name
       if mae is not None:
-        label = f"{recon_name} (MAE = {mae:.1f} dB)"
+        label = f'{recon_name} (MAE = {mae:.1f} dB)'
 
       est_freqs = []
       est_thresholds = []

@@ -7,9 +7,11 @@ from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 import io
 import os
+import re
 import smtplib
 import subprocess
 import tempfile
+import urllib.request
 import zipfile
 
 import matplotlib.pyplot as plt
@@ -22,7 +24,7 @@ import streamlit as st
 # variable (local) to avoid hardcoding it in public source code.
 # Set SENDER_EMAIL in .streamlit/secrets.toml or as an env var.
 # Version string for the app GUI and log files.
-DEMO_UPDATED = 'Version 7.0.1, 28 May 2026'
+DEMO_UPDATED = 'Version 7.1.2, 19 June 2026'
 # Determine the preferred stimuli directory.
 PREFERRED_STIMULI_DIR = ('local_stimuli' if
                          os.path.isdir('local_stimuli') else 'stimuli')
@@ -51,10 +53,52 @@ PTA_MAX_LEVEL_DB_HL = 70
 PTA_MAX_TRIALS_PER_EAR = 40  # Stopping condition for adaptive logic.
 
 # Supported headphone devices for calibrated hearing tests.
-DEVICE_PIXEL_BUDS = 'Google Pixel Buds'
+DEVICE_PIXEL_BUDS = 'Google Pixel Buds Pro 2'
 DEVICE_AIRPODS_PRO2 = 'Apple AirPods Pro 2'
-SUPPORTED_DEVICES = [DEVICE_PIXEL_BUDS, DEVICE_AIRPODS_PRO2]
+DEVICE_OTHER = 'Other (Untested Calibration)'
+SUPPORTED_DEVICES = [DEVICE_PIXEL_BUDS, DEVICE_AIRPODS_PRO2, DEVICE_OTHER]
 
+
+@st.cache_data(ttl=86400) # Cache for 24 hours
+def get_autoeq_index() -> list[dict]:
+  """Downloads and parses the full AutoEq results index from GitHub.
+
+  Returns a list of dicts, each with keys: 'name', 'path', 'source', 'rig'
+  """
+  url = (
+      'https://raw.githubusercontent.com/'
+      'jaakkopasanen/AutoEq/master/results/INDEX.md'
+  )
+  headers = {
+      'User-Agent': 'HearingTestCalibrationAgent/1.0'
+  }
+  try:
+    req = urllib.request.Request(url, headers=headers)
+    with urllib.request.urlopen(req, timeout=10) as response:
+      content = response.read().decode('utf-8')
+
+    # Regex to parse the markdown index lines
+    # Example: - [1MORE Piston Fit]
+    # (./Rtings/HMS%20II.3%20in-ear/1MORE%20Piston%20Fit) by Rtings on HMS II.3
+    pattern = re.compile(
+        r'^-\s+\[(?P<name>[^\]]+)\]\(\./(?P<path>.*?)\)\s+by\s+'
+        r'(?P<source>.*?)(?:\s+on\s+(?P<rig>[^\n]+))?$',
+        re.MULTILINE
+    )
+
+    entries = []
+    for match in pattern.finditer(content):
+      gd = match.groupdict()
+      entries.append({
+          'name': gd['name'],
+          'path': gd['path'],
+          'source': gd['source'],
+          'rig': gd['rig'] if gd['rig'] else ''
+      })
+    return entries
+  except Exception as e:  # pylint: disable=broad-exception-caught
+    print(f'Failed to fetch AutoEq index: {e}')
+    return []
 
 
 def get_target_audience() -> str:
@@ -305,7 +349,7 @@ def display_email_results_form(
         <p>Test results for the <b>{test_name}</b> are attached.</p>
         """
         if participant_id:
-          body_html += f"<p>Participant ID: {participant_id}</p>"
+          body_html += f'<p>Participant ID: {participant_id}</p>'
         body_html += """
         <p>Please download and save the attached zip file.</p>
         </body></html>

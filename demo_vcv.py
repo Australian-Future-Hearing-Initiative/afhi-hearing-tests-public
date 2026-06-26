@@ -141,7 +141,7 @@ def _get_all_base_names() -> dict[str, list[str]]:
     wav_dir = SYNTHETIC_WAV_DIR
 
   if not os.path.isdir(wav_dir):
-    st.error(f"Stimuli directory not found: {wav_dir}")
+    st.error(f'Stimuli directory not found: {wav_dir}')
     return {}
 
   active_set = _get_active_consonant_set()

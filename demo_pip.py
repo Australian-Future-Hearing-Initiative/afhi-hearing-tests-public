@@ -15,6 +15,8 @@ import calibration
 import common
 import pip_results
 import pta_algorithms
+from hearing_agent import get_calibration_factors
+
 
 FS_HZ = 44100  # Sampling frequency in Hz used to synthesize the tones.
 N_PULSES = 3  # Number of pulses in the tone train.
@@ -146,13 +148,21 @@ def demo_button():
 
 def start_button():
   """Displays the start button and handles its functionality."""
+  start_disabled = st.session_state.pip_state == 'Running'
+  if st.session_state.get('pip_device') == common.DEVICE_OTHER:
+    if (
+        st.session_state.get('dynamic_calibrated_device')
+        != st.session_state.get('pip_custom_device')
+    ):
+      start_disabled = True
   if st.button('Start the test', key='pta_start_test',
                icon=':material/play_arrow:',
-               disabled=st.session_state.pip_state == 'Running'):
+               disabled=start_disabled):
     set_initial_demo_state()
     st.session_state.pip_state = 'Running'
     st.session_state.pip_start_time = time.time()
     st.rerun()
+
 
 def cancel_button():
   """Displays the cancel button and handles its functionality."""
@@ -361,6 +371,81 @@ def display_settings():
     st.session_state.pip_device = device
     if device == common.DEVICE_AIRPODS_PRO2:
       st.caption('Ensure all Hearing Assistance features are disabled.')
+    elif device == common.DEVICE_OTHER:
+      # Load the AutoEq index
+      entries = common.get_autoeq_index()
+      if not entries:
+        st.error(
+            'Failed to load AutoEq headphone database. Please raise an issue.'
+        )
+      else:
+        # Get unique names sorted alphabetically
+        unique_names = sorted(list(set(entry['name'] for entry in entries)))
+
+        default_index = None
+
+        st.info(
+            ' Find your model headphones in the list below. '
+            ' Headphones may have physical toggles that enable features like'
+            ' noise cancelling which can alter the result and are not accounted'
+            ' for in these calibration profiles. '
+            ' See [AutoEq]'
+            '(https://github.com/jaakkopasanen/AutoEq/tree/master#autoeq) '
+            'for more info.'
+        )
+
+        selected_model = st.selectbox(
+            'Select headphone model:',
+            options=unique_names,
+            index=default_index,
+            placeholder='Search for a headphone model...',
+            disabled=settings_disabled,
+            key='pip_custom_selectbox'
+        )
+
+        if selected_model:
+          custom_model = selected_model
+          st.session_state.pip_custom_device = custom_model
+          st.session_state.pip_custom_device_label = selected_model
+
+          if 'pip_custom_device_url' in st.session_state:
+            del st.session_state.pip_custom_device_url
+
+          calibrated_model = st.session_state.get('dynamic_calibrated_device')
+          if calibrated_model != custom_model:
+            st.info(
+                f'Please run calibration retrieval for "{custom_model}" '
+                'before starting the test.'
+            )
+            if st.button(
+                'Run Calibration Retrieval', key='run_pip_calibration'
+            ):
+              with st.spinner(
+                  f'Running Calibration Agent for "{custom_model}"...'
+              ):
+                res = get_calibration_factors(
+                    custom_model, 'Google Pixel Buds Pro 2'
+                )
+                if res['status'] == 'success':
+                  offsets_dict = dict(
+                      zip(res['frequencies'], res['correction_factors_db'])
+                  )
+                  st.session_state.dynamic_offsets = offsets_dict
+                  st.session_state.dynamic_calibrated_device = custom_model
+                  st.session_state.dynamic_cal_res = res
+                  st.success(f'Successfully calibrated: {custom_model}!')
+                  st.rerun()
+                else:
+                  st.error(f"Calibration failed: {res['error_message']}")
+          else:
+            res = st.session_state.dynamic_cal_res
+            st.success(f'Calibrated Device: {calibrated_model}')
+            st.write(f"Vetted Source: {res['user_selected_source']}")
+            if res['bone_conduction_warning']:
+              st.warning('⚠️ Bone Conduction Detected. Bypasses middle ear!')
+            if res.get('vetting_warning'):
+              st.info(f"⚠️ {res['vetting_warning']}")
+
   else:
     st.session_state.pip_device = common.DEVICE_PIXEL_BUDS
 
