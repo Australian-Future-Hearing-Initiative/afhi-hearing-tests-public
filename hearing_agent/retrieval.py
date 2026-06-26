@@ -18,50 +18,72 @@ def github_to_raw_url(html_url: str) -> str:
     """Converts a standard GitHub file URL to a raw content URL."""
     return html_url.replace("github.com", "raw.githubusercontent.com").replace("/blob/", "/")
 
+_AUTOEQ_INDEX_CACHE = None
+
 def search_autoeq_files(headphone_name: str) -> list[dict]:
-    """Searches the GitHub Code Search API for a headphone model name in AutoEq results.
+    """Retrieves all measurement entries for a headphone model name from the AutoEq index.
     
     Returns a list of dicts with keys: 'name', 'path', 'database', 'html_url', 'raw_url'
     """
+    global _AUTOEQ_INDEX_CACHE
     if not headphone_name:
         return []
-    
-    # Format the query for GitHub Code Search API
-    # Since search code is constrained to files matching the name
-    query_str = f"filename:\"{headphone_name}\" extension:csv repo:jaakkopasanen/AutoEq path:results"
-    encoded_query = urllib.parse.quote(query_str)
-    api_url = f"https://api.github.com/search/code?q={encoded_query}"
-    
-    headers = {
-        "User-Agent": "HearingTestCalibrationAgent/1.0",
-        "Accept": "application/vnd.github+json"
-    }
-    
-    try:
-        req = urllib.request.Request(api_url, headers=headers)
-        with urllib.request.urlopen(req, timeout=8) as response:
-            data = json.loads(response.read().decode('utf-8'))
-            items = data.get("items", [])
-            
-            results = []
-            for item in items:
-                path = item.get("path", "")
-                # Extract database source from path (results/<source>/...)
-                path_parts = path.split("/")
-                db_source = path_parts[1] if len(path_parts) > 1 else "unknown"
+        
+    if _AUTOEQ_INDEX_CACHE is None:
+        url = "https://raw.githubusercontent.com/jaakkopasanen/AutoEq/master/results/INDEX.md"
+        headers = {
+            "User-Agent": "HearingTestCalibrationAgent/1.0"
+        }
+        try:
+            req = urllib.request.Request(url, headers=headers)
+            with urllib.request.urlopen(req, timeout=10) as response:
+                content = response.read().decode('utf-8')
                 
-                results.append({
-                    "name": item.get("name", "").replace(".csv", ""),
-                    "path": path,
-                    "database": db_source,
-                    "html_url": item.get("html_url", ""),
-                    "raw_url": github_to_raw_url(item.get("html_url", ""))
-                })
-            return results
+            # Regex to parse the markdown index lines
+            pattern = re.compile(
+                r'^-\s+\[(?P<name>[^\]]+)\]\(\./(?P<path>[^\)]+)\)\s+by\s+(?P<source>.*?)(?:\s+on\s+(?P<rig>[^\n]+))?$',
+                re.MULTILINE
+            )
             
-    except Exception as e:
-        print(f"GitHub Search API call failed: {e}.")
-        return []
+            entries = []
+            for match in pattern.finditer(content):
+                gd = match.groupdict()
+                entries.append({
+                    "name": gd["name"],
+                    "path": gd["path"],
+                    "source": gd["source"],
+                    "rig": gd["rig"] if gd["rig"] else ""
+                })
+            _AUTOEQ_INDEX_CACHE = entries
+        except Exception as e:
+            print(f"Failed to fetch or parse AutoEq index: {e}")
+            return []
+            
+    # Filter entries matching headphone_name case-insensitively
+    matches = [e for e in _AUTOEQ_INDEX_CACHE if e["name"].lower() == headphone_name.lower()]
+    
+    results = []
+    for entry in matches:
+        path = entry["path"]
+        last_part = path.split('/')[-1]
+        
+        # database is the first part of the path (e.g. 'oratory1990', 'crinacle', 'Rtings')
+        path_parts = path.split("/")
+        db_source = path_parts[0] if path_parts else "unknown"
+        
+        # Build html_url and raw_url
+        html_url = f"https://github.com/jaakkopasanen/AutoEq/blob/master/results/{path}/{last_part}.csv"
+        raw_url = f"https://raw.githubusercontent.com/jaakkopasanen/AutoEq/master/results/{path}/{last_part}.csv"
+        
+        results.append({
+            "name": entry["name"],
+            "path": path,
+            "database": db_source,
+            "html_url": html_url,
+            "raw_url": raw_url
+        })
+        
+    return results
 
 def fetch_frequency_response(raw_url: str, headphone_name: str = "") -> FrequencyResponse:
     """Retrieves and parses the CSV response data from a raw AutoEq URL.

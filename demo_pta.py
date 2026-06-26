@@ -506,67 +506,57 @@ def display_settings():
       # Load the AutoEq index
       entries = common.get_autoeq_index()
       if not entries:
-        st.error("Failed to load AutoEq headphone database. Please file a issue.")
+        st.error(
+            'Failed to load AutoEq headphone database. Please file a issue.'
+        )
       else:
-        # Try to find the index of the previously selected custom device
-        def format_label(entry):
-          label = f"{entry['name']} (by {entry['source']}"
-          if entry['rig']:
-            label += f" on {entry['rig']})"
-          else:
-            label += ")"
-          return label
-
-        # Format labels and build mapping from label to entry
-        label_to_entry = {}
-        for entry in entries:
-          label = format_label(entry)
-          label_to_entry[label] = entry
-        
-        labels = list(label_to_entry.keys())
-
-        filtered_labels = labels
+        # Get unique names sorted alphabetically
+        unique_names = sorted(list(set(entry['name'] for entry in entries)))
 
         default_index = None
 
         st.info(
-            " Find your model headphones in the list below. "
-            " Headphones may have physical toggles that enable features like"
-            " noise cancelling which can alter the result and are not accounted"
-            " for in these calibration audiograms. "
-            " See [AutoEq](https://github.com/jaakkopasanen/AutoEq/tree/master#autoeq) for more info."
+            ' Find your model headphones in the list below. '
+            ' Headphones may have physical toggles that enable features like'
+            ' noise cancelling which can alter the result and are not accounted'
+            ' for in these calibration audiograms. '
+            ' See [AutoEq]'
+            '(https://github.com/jaakkopasanen/AutoEq/tree/master#autoeq) '
+            'for more info.'
         )
 
-        selected_label = st.selectbox(
-            'Select headphone model (and calibration provider):',
-            options=filtered_labels,
+        selected_model = st.selectbox(
+            'Select headphone model:',
+            options=unique_names,
             index=default_index,
-            placeholder="Search for a headphone model calibration...",
+            placeholder='Search for a headphone model...',
             disabled=settings_disabled,
-            key="pta_custom_selectbox"
+            key='pta_custom_selectbox'
         )
 
-        if selected_label:
-          selected_entry = label_to_entry[selected_label]
-          custom_model = selected_entry['name']
+        if selected_model:
+          custom_model = selected_model
           st.session_state.pta_custom_device = custom_model
-          st.session_state.pta_custom_device_label = selected_label
-          
-          # Construct raw URL
-          path_parts = selected_entry['path'].split('/')
-          last_part = path_parts[-1]
-          raw_url = f"https://raw.githubusercontent.com/jaakkopasanen/AutoEq/master/results/{selected_entry['path']}/{last_part}.csv"
-          st.session_state.pta_custom_device_url = raw_url
+          st.session_state.pta_custom_device_label = selected_model
+
+          if 'pta_custom_device_url' in st.session_state:
+            del st.session_state.pta_custom_device_url
 
           calibrated_model = st.session_state.get('dynamic_calibrated_device')
           if calibrated_model != custom_model:
             st.info(
-                f'Please run calibration retrieval for "{custom_model}" before starting'
-                ' the test.'
+                f'Please run calibration retrieval for "{custom_model}" '
+                'before starting the test.'
             )
-            if st.button('Run Calibration Retrieval', key='run_pta_calibration'):
-              with st.spinner(f'Running Calibration Agent for "{custom_model}"...'):
-                res = get_calibration_factors(raw_url, 'Google Pixel Buds Pro')
+            if st.button(
+                'Run Calibration Retrieval', key='run_pta_calibration'
+            ):
+              with st.spinner(
+                  f'Running Calibration Agent for "{custom_model}"...'
+              ):
+                res = get_calibration_factors(
+                    custom_model, 'Google Pixel Buds Pro'
+                )
                 if res['status'] == 'success':
                   offsets_dict = dict(
                       zip(res['frequencies'], res['correction_factors_db'])
