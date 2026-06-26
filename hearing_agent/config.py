@@ -5,7 +5,7 @@ AUDIOMETRY_FREQUENCIES = [250, 500, 1000, 2000, 3000, 4000, 6000, 8000]
 
 
 # Database priority order. Higher in list means more authoritative.
-DATABASE_PRIORITY = ['oratory1990', 'crinacle', 'rtings']
+DATABASE_PRIORITY = ['oratory1990', 'rtings']
 
 # Safety limits for correction factors (dB)
 # Prevents clipping, audio distortion, or excessively loud/quiet volume levels.

@@ -388,7 +388,7 @@ def display_settings():
             ' Find your model headphones in the list below. '
             ' Headphones may have physical toggles that enable features like'
             ' noise cancelling which can alter the result and are not accounted'
-            ' for in these calibration audiograms. '
+            ' for in these calibration profiles. '
             ' See [AutoEq]'
             '(https://github.com/jaakkopasanen/AutoEq/tree/master#autoeq) '
             'for more info.'

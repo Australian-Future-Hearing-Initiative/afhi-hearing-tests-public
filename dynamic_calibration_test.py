@@ -219,7 +219,7 @@ class TestRetrieval(unittest.TestCase):
 
     # Search for Sony WH-1000XM4
     res = search_autoeq_files('Sony WH-1000XM4')
-    self.assertEqual(len(res), 2)
+    self.assertEqual(len(res), 1)
 
     self.assertEqual(res[0]['name'], 'Sony WH-1000XM4')
     self.assertEqual(res[0]['database'], 'oratory1990')
@@ -227,15 +227,6 @@ class TestRetrieval(unittest.TestCase):
         res[0]['raw_url'],
         'https://raw.githubusercontent.com/jaakkopasanen/AutoEq/master/'
         'results/oratory1990/over-ear/Sony%20WH-1000XM4/'
-        'Sony%20WH-1000XM4.csv',
-    )
-
-    self.assertEqual(res[1]['name'], 'Sony WH-1000XM4')
-    self.assertEqual(res[1]['database'], 'crinacle')
-    self.assertEqual(
-        res[1]['raw_url'],
-        'https://raw.githubusercontent.com/jaakkopasanen/AutoEq/master/'
-        'results/crinacle/GRAS%2043AG-7%20over-ear/Sony%20WH-1000XM4/'
         'Sony%20WH-1000XM4.csv',
     )
 

@@ -71,6 +71,9 @@ def search_autoeq_files(headphone_name: str) -> list[dict]:
         path_parts = path.split("/")
         db_source = path_parts[0] if path_parts else "unknown"
         
+        if db_source.lower() == 'crinacle':
+            continue
+            
         # Build html_url and raw_url
         html_url = f"https://github.com/jaakkopasanen/AutoEq/blob/master/results/{path}/{last_part}.csv"
         raw_url = f"https://raw.githubusercontent.com/jaakkopasanen/AutoEq/master/results/{path}/{last_part}.csv"
