@@ -83,8 +83,11 @@ def fetch_frequency_response(raw_url: str, headphone_name: str = "") -> Frequenc
             temp_file_path = temp_file.name
             
         try:
-            # FrequencyResponse in autoeq 2.2.0 uses read_from_csv
-            fr = FrequencyResponse.read_from_csv(temp_file_path)
+            # FrequencyResponse in autoeq 4.x uses read_csv, while autoeq 2.2.0 uses read_from_csv
+            if hasattr(FrequencyResponse, 'read_csv'):
+                fr = FrequencyResponse.read_csv(temp_file_path)
+            else:
+                fr = FrequencyResponse.read_from_csv(temp_file_path)
             fr.name = headphone_name
             return fr
         finally:

@@ -375,36 +375,29 @@ def display_settings():
       # Load the AutoEq index
       entries = common.get_autoeq_index()
       if not entries:
-        st.error("Failed to load AutoEq headphone database. Please check your internet connection.")
+        st.error("Failed to load AutoEq headphone database. Please raise an issue.")
       else:
-        # Compute uniques (recommended source only)
-        uniques = []
-        seen_names = set()
-        for entry in entries:
-          if entry['name'] not in seen_names:
-            uniques.append(entry)
-            seen_names.add(entry['name'])
+        # # Compute uniques (recommended source only)
+        # uniques = []
+        # seen_names = set()
+        # for entry in entries:
+        #   if entry['name'] not in seen_names:
+        #     uniques.append(entry)
+        #     seen_names.add(entry['name'])
 
-        # Filter toggle
-        search_mode = st.radio(
-            "Database filter:",
-            options=["uniques", "all"],
-            index=0,
-            horizontal=True,
-            help="uniques: recommended source only | all: all measurement sources",
-            disabled=settings_disabled
-        )
+        # # Filter toggle
+        # search_mode = st.radio(
+        #     "Database filter:",
+        #     options=["uniques", "all"],
+        #     index=0,
+        #     horizontal=True,
+        #     help="uniques: recommended source only | all: all measurement sources",
+        #     disabled=settings_disabled
+        # )
 
-        options_list = uniques if search_mode == "uniques" else entries
+        # options_list = uniques if search_mode == "uniques" else entries
 
         # Try to find the index of the previously selected custom device
-        default_custom = st.session_state.get('pip_custom_device', 'Sony WH-1000XM4')
-        default_index = 0
-        for idx, entry in enumerate(options_list):
-          if entry['name'] == default_custom:
-            default_index = idx
-            break
-
         def format_label(entry):
           label = f"{entry['name']} (by {entry['source']}"
           if entry['rig']:
@@ -413,17 +406,40 @@ def display_settings():
             label += ")"
           return label
 
-        selected_entry = st.selectbox(
-            'Select headphone model:',
-            options=options_list,
-            index=default_index,
-            format_func=format_label,
-            disabled=settings_disabled
+        # Format labels and build mapping from label to entry
+        label_to_entry = {}
+        for entry in entries:
+          label = format_label(entry)
+          label_to_entry[label] = entry
+        
+        labels = list(label_to_entry.keys())
+
+        filtered_labels = labels
+
+        default_index = None
+
+        st.info(
+            " Find your model headphones in the list below. "
+            " Headphones may have physical toggles that enable features like"
+            " noise cancelling which can alter the result and are not accounted"
+            " for in these calibration audiograms. "
+            " See [AutoEq](https://github.com/jaakkopasanen/AutoEq/tree/master#autoeq) for more info."
         )
 
-        if selected_entry:
+        selected_label = st.selectbox(
+            'Select headphone model (and calibration provider):',
+            options=filtered_labels,
+            index=default_index,
+            placeholder="Search for a headphone model calibration...",
+            disabled=settings_disabled,
+            key="pip_custom_selectbox"
+        )
+
+        if selected_label:
+          selected_entry = label_to_entry[selected_label]
           custom_model = selected_entry['name']
           st.session_state.pip_custom_device = custom_model
+          st.session_state.pip_custom_device_label = selected_label
           
           # Construct raw URL
           path_parts = selected_entry['path'].split('/')
