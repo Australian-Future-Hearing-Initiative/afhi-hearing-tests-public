@@ -46,7 +46,10 @@ ADVANCED_METHOD_NAME = 'Adaptive PTA (newer, faster)'
 def set_initial_demo_state():
   """Sets initial session state variables specific to the PTA test."""
   st.session_state.pta_method = ADVANCED_METHOD_NAME   # Default method.
-  st.session_state.pta_state = 'Initial'  # 'Initial', 'Running', 'Completed'.
+  # Test execution state machine: 'Initial', 'Running', 'Paused', 'Completed'.
+  # 'Paused' state suspends stimulus presentation and disables user response
+  # input while leaving recorded trial history unchanged.
+  st.session_state.pta_state = 'Initial'
   st.session_state.pta_merge_lr = False  # Default value for binaural settings.
   if st.session_state.pta_merge_lr:
     st.session_state.pta_current_ear = 'both'
@@ -62,6 +65,9 @@ def set_initial_demo_state():
   st.session_state.pta_in_wait_period = False  # Indicate if in wait period.
   st.session_state.pta_start_time = None # Start time of the test.
   st.session_state.pta_duration_s = None  # Duration of the test in seconds.
+  st.session_state.pta_pause_start_time = None  # Start time of current pause.
+  st.session_state.pta_total_pause_duration_s = 0.0  # Total time spent paused.
+  st.session_state.pta_pause_count = 0  # Number of times test was paused.
   st.session_state.pta_tone_start_time = None  # Start time of the current tone.
   st.session_state.pta_initial_state_set = True
   st.session_state.pta_backup_saved = False # Flag for local backup status.
@@ -177,20 +183,71 @@ def demo_button():
       st.rerun()
 
 def start_button():
-  """Displays the start button and handles its functionality."""
-  if st.button('Start the test', key='pta_start_test',
-               icon=':material/play_arrow:',
-               disabled=st.session_state.pta_state == 'Running'):
-    set_initial_demo_state()
-    st.session_state.pta_state = 'Running'
-    st.session_state.pta_start_time = time.time()
+  """Displays the primary test action button and handles state transitions.
+
+  For the Adaptive PTA test method, manages transitions between test states:
+  - Initial / Completed: Starts a new test run.
+  - Running: Pauses test execution and logs pause start timestamp.
+  - Paused: Resumes test execution and accumulates total pause duration.
+
+  For Hughson-Westlake, renders standard Start button (disabled when running).
+  """
+  is_adaptive = st.session_state.get('pta_method') == ADVANCED_METHOD_NAME
+  state = st.session_state.pta_state
+
+  if not is_adaptive:
+    # Original behavior for Hughson-Westlake method.
+    if st.button('Start the test', key='pta_start_test',
+                 icon=':material/play_arrow:',
+                 disabled=state == 'Running'):
+      set_initial_demo_state()
+      st.session_state.pta_state = 'Running'
+      st.session_state.pta_start_time = time.time()
+      st.rerun()
+    return
+
+  if state in ['Initial', 'Completed']:
+    button_label = 'Start the test'
+    button_icon = ':material/play_arrow:'
+    button_disabled = False
+  elif state == 'Running':
+    button_label = 'Pause the test'
+    button_icon = ':material/pause:'
+    button_disabled = False
+  elif state == 'Paused':
+    button_label = 'Resume the test'
+    button_icon = ':material/play_arrow:'
+    button_disabled = False
+  else:
+    raise ValueError(f'Invalid PTA state: {state}')
+
+  if st.button(button_label, key='pta_start_test',
+               icon=button_icon,
+               disabled=button_disabled):
+    if state in ['Initial', 'Completed']:
+      set_initial_demo_state()
+      st.session_state.pta_state = 'Running'
+      st.session_state.pta_start_time = time.time()
+    elif state == 'Running':
+      st.session_state.pta_state = 'Paused'
+      st.session_state.pta_pause_start_time = time.time()
+      st.session_state.pta_pause_count += 1
+    elif state == 'Paused':
+      if st.session_state.pta_pause_start_time is not None:
+        pause_duration = time.time() - st.session_state.pta_pause_start_time
+        st.session_state.pta_total_pause_duration_s += pause_duration
+        st.session_state.pta_pause_start_time = None
+      st.session_state.pta_state = 'Running'
+    else:
+      raise ValueError(f'Invalid PTA state: {state}')
     st.rerun()
 
 def cancel_button():
   """Displays the cancel button and handles its functionality."""
+  disabled = st.session_state.pta_state not in ['Running', 'Paused']
   if st.button('Cancel the test', key='pta_cancel_test',
                icon=':material/cancel:',
-               disabled=st.session_state.pta_state != 'Running'):
+               disabled=disabled):
     set_initial_demo_state()
     st.rerun()
 
@@ -471,8 +528,7 @@ def display_settings():
   st.write(common.SETTINGS_STRING)
   # Disable all settings once test has started.
   is_nal = st.session_state.get('app_target_audience') == 'NAL'
-  settings_disabled = (st.session_state.pta_state == 'Running' or
-                      st.session_state.pta_state == 'Completed' or
+  settings_disabled = (st.session_state.pta_state != 'Initial' or
                       is_nal)
   st.toggle('Merge L/R', key='toggle_pta_merge_lr',
             help=common.MERGE_LR_HELP,
@@ -652,6 +708,10 @@ def adaptive_pta_next_step(ear):
     st.session_state.pta_tone_start_time = time.time()
     play_pulsed_tone(frequency_hz, amplitude, ear)
     time.sleep(RESPONSE_WINDOW_S)  # Give the user time to respond.
+    # Results are appended ONLY after tone playback and response window finish.
+    # If the user clicks 'Pause the test' during tone playback or wait time,
+    # Streamlit's rerun aborts execution before reaching this append,
+    # discarding the in-flight trial.
     st.session_state.pta_results.append(
       (ear, frequency_hz, dbhl, False,
        RESPONSE_WINDOW_S)  # Use full response window for response time.
@@ -723,14 +783,27 @@ def create_main_demo():
       run_adaptive_pta()
     else:
       raise ValueError('Invalid PTA method specified.')
+  elif st.session_state.pta_state == 'Paused':
+    # Test execution is suspended; stimulus generation and response input
+    # are skipped.
+    st.info('Test paused. Click "Resume the test" to continue.')
   elif st.session_state.pta_state == 'Completed':
     st.write('')  # Add some whitespace.
     st.subheader('Results')
     # Display test duration.
     if st.session_state.pta_duration_s is not None:
-      duration_m = int(st.session_state.pta_duration_s // 60)
-      duration_s = int(st.session_state.pta_duration_s % 60)
-      st.info(f'Test duration: {duration_m} min {duration_s} s')
+      total_s = int(st.session_state.pta_duration_s)
+      total_m, total_sec = divmod(total_s, 60)
+      if st.session_state.pta_total_pause_duration_s > 0:
+        active_s = int(
+            st.session_state.pta_duration_s -
+            st.session_state.pta_total_pause_duration_s
+        )
+        active_m, active_sec = divmod(active_s, 60)
+        st.info(f'Test duration: {active_m} min {active_sec} s active '
+                f'({total_m} min {total_sec} s total, including pauses)')
+      else:
+        st.info(f'Test duration: {total_m} min {total_sec} s')
 
     if st.session_state.pta_using_canned_data:
       st.write('The example data here indicate mild-to-moderate hearing loss '
@@ -749,10 +822,17 @@ def create_main_demo():
 
     # Prepare data for download/email.
     if not st.session_state.pta_using_canned_data:
+      active_duration_s = (
+          st.session_state.pta_duration_s -
+          st.session_state.pta_total_pause_duration_s
+      )
       full_csv = pta_results.generate_pta_full_results_csv(
           st.session_state.pta_results,
           st.session_state.pta_duration_s,
-          st.session_state.pta_method
+          st.session_state.pta_method,
+          active_duration_s=active_duration_s,
+          pause_count=st.session_state.pta_pause_count,
+          total_pause_duration_s=st.session_state.pta_total_pause_duration_s
       )
       left_csv = pta_results.generate_audiogram_csv('Left', left_audiogram)
       right_csv = pta_results.generate_audiogram_csv('Right', right_audiogram)

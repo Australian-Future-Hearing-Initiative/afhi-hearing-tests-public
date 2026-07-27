@@ -25,6 +25,28 @@ def test_generate_pta_full_results_csv_headers():
   assert '# System volume:' in csv
 
 
+def test_generate_pta_full_results_csv_pause_headers():
+  '''CSV contains active duration, pause count, and paused duration headers.'''
+  csv = pta_results.generate_pta_full_results_csv(
+      _SAMPLE_TRIALS, pta_duration_s=120, pta_method='Hybrid',
+      active_duration_s=105.5, pause_count=2, total_pause_duration_s=14.5
+  )
+  assert '# Test duration: 120 s' in csv
+  assert '# Active duration: 105 s' in csv
+  assert '# Pause count: 2' in csv
+  assert '# Total paused duration: 14 s' in csv
+
+
+def test_generate_pta_full_results_csv_omitted_pause_args():
+  '''Omitting optional pause args does not add pause header lines.'''
+  csv = pta_results.generate_pta_full_results_csv(
+      _SAMPLE_TRIALS, pta_duration_s=120, pta_method='Hybrid'
+  )
+  assert '# Active duration:' not in csv
+  assert '# Pause count:' not in csv
+  assert '# Total paused duration:' not in csv
+
+
 def test_generate_pta_full_results_csv_row_count():
   '''CSV data section contains exactly one row per trial (plus header row).'''
   csv = pta_results.generate_pta_full_results_csv(

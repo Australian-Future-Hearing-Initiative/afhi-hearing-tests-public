@@ -11,7 +11,11 @@ from common import DEMO_UPDATED
 
 
 def generate_pta_full_results_csv(pta_results: list,
-                                  pta_duration_s: int, pta_method: str) -> str:
+                                  pta_duration_s: int,
+                                  pta_method: str,
+                                  active_duration_s: float = None,
+                                  pause_count: int = 0,
+                                  total_pause_duration_s: float = 0.0) -> str:
   """Generates the CSV content string for the full PTA results.
 
   Args:
@@ -19,6 +23,9 @@ def generate_pta_full_results_csv(pta_results: list,
       response_time_s).
     pta_duration_s: Duration of the test in seconds.
     pta_method: The name of the PTA method used.
+    active_duration_s: Duration of active testing in seconds (excluding pause).
+    pause_count: Total number of pause events during test.
+    total_pause_duration_s: Total time spent in paused state in seconds.
 
   Returns:
     String containing the formatted CSV data.
@@ -30,6 +37,10 @@ def generate_pta_full_results_csv(pta_results: list,
   buffer.write(f"# Test date/time (UTC): {time.strftime('%Y-%m-%d %H:%M')}\n")
   buffer.write(f'# Tones presented: {len(pta_results)}\n')
   buffer.write(f'# Test duration: {int(pta_duration_s)} s\n')
+  if active_duration_s is not None:
+    buffer.write(f'# Active duration: {int(active_duration_s)} s\n')
+    buffer.write(f'# Pause count: {pause_count}\n')
+    buffer.write(f'# Total paused duration: {int(total_pause_duration_s)} s\n')
   volume_str = common.get_macos_system_volume()
   buffer.write(f'# System volume: {volume_str}\n')
   buffer.write('#\n')
