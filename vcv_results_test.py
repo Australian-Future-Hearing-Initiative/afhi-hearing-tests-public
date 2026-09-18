@@ -143,3 +143,19 @@ def test_display_interpretation(mock_st):
   mock_st.subheader.assert_called()
   mock_st.image.assert_called_once()
   mock_st.markdown.assert_called_once()
+
+
+def test_format_no_speech_count_singular():
+  """One no-speech trial uses the singular noun."""
+  # pylint: disable=protected-access
+  assert vcv_results._format_no_speech_count(1) == (
+      'Could not hear speech: 1 trial')
+
+
+def test_format_no_speech_count_plural():
+  """Zero and many no-speech trials use the plural noun."""
+  # pylint: disable=protected-access
+  assert vcv_results._format_no_speech_count(0) == (
+      'Could not hear speech: 0 trials')
+  assert vcv_results._format_no_speech_count(4) == (
+      'Could not hear speech: 4 trials')

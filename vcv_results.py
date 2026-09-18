@@ -47,6 +47,12 @@ def _cleanup_wav_dir():
     st.session_state.vcv_wav_save_dir = None
 
 
+def _format_no_speech_count(count: int) -> str:
+  """Returns a short summary of no-speech trial count."""
+  word = 'trial' if count == 1 else 'trials'
+  return f'Could not hear speech: {count} {word}'
+
+
 def create_confusion_matrix_image(confusion_matrix, labels):
   """Creates and returns a confusion matrix figure.
   """
@@ -224,6 +230,9 @@ def display_results(
     if results_left:
       accuracy_left = results_left['accuracy'] * 100
       st.write(f'Accuracy: {accuracy_left:.1f}%')
+      st.write(_format_no_speech_count(
+          results_left.get('no_speech_count', 0)
+      ))
       st.write('Confusion Matrix:')
       fig_left = create_confusion_matrix_image(
         results_left['confusion_matrix'],
@@ -238,6 +247,9 @@ def display_results(
     if results_right:
       accuracy_right = results_right['accuracy'] * 100
       st.write(f'Accuracy: {accuracy_right:.1f}%')
+      st.write(_format_no_speech_count(
+          results_right.get('no_speech_count', 0)
+      ))
       st.write('Confusion Matrix:')
       fig_right = create_confusion_matrix_image(
         results_right['confusion_matrix'],
@@ -381,6 +393,9 @@ def display_adaptive_results(
       st.write(f'##### {ear_label}')
       results = confusion_results.get(key)
       if results:
+        st.write(_format_no_speech_count(
+            results.get('no_speech_count', 0)
+        ))
         fig = create_confusion_matrix_image(
             results['confusion_matrix'], all_possible_labels
         )

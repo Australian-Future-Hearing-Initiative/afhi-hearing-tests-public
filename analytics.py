@@ -2,6 +2,9 @@
 
 import numpy as np
 
+# Token stored when the listener reports that no speech was heard.
+NO_SPEECH_RESPONSE = 'NO_SPEECH'
+
 
 def _create_confusion_matrix(responses, label_list):
   """Creates a confusion matrix from the given responses.
@@ -15,6 +18,10 @@ def _create_confusion_matrix(responses, label_list):
   n_labels = len(label_list)
   confusion_matrix = np.zeros((n_labels, n_labels), dtype=int)
   for response, correct_answer in responses:
+    if (response not in label_list or
+        correct_answer not in label_list):
+      # Skip no-speech and any other non-consonant response.
+      continue
     if response == correct_answer:
       # Find index of response/correct answer in the label list.
       i = label_list.index(correct_answer)
@@ -29,8 +36,11 @@ def analyze_results(responses, label_list):
   """Analyzes the test results and returns a dictionary of metrics."""
   correct_answers = 0
   incorrect_answers = 0
+  no_speech_count = 0
 
   for response, correct_answer in responses:
+    if response == NO_SPEECH_RESPONSE:
+      no_speech_count += 1
     if response == correct_answer:
       correct_answers += 1
     else:
@@ -41,5 +51,6 @@ def analyze_results(responses, label_list):
       'correct_answers': correct_answers,
       'incorrect_answers': incorrect_answers,
       'accuracy': accuracy,
+      'no_speech_count': no_speech_count,
       'confusion_matrix': _create_confusion_matrix(responses, label_list)
   }

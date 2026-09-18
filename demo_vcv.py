@@ -32,6 +32,9 @@ DEFAULT_N_TEST_TRIALS = 90
 NOISE_RAMP_DURATION_S = 0.1
 N_PRACTICE_TRIALS = 5
 PRACTICE_SNR_DB = 10.0
+# Token stored when the listener reports that no speech was heard.
+NO_SPEECH_RESPONSE = analytics.NO_SPEECH_RESPONSE
+NO_SPEECH_BUTTON_LABEL = 'Could not hear speech'
 # Volume level labels mapped to dB SPL values.
 # Hearing profile labels mapped to dB SPL values.
 HEARING_PROFILES = {
@@ -623,20 +626,22 @@ def create_progress_bar():
     )
 
 def create_test_instructions():
+  """Writes how to start the test and how to respond."""
+  if not st.session_state.vcv_freeze_settings:
+    st.write('Click **Practice**, then **Start test** to begin.')
+  st.write(
+      '1. After each sound, click the consonant that matches what you '
+      'heard. **If you heard speech but are unsure, please guess.**'
+  )
+  st.write(
+      '2. If you could not hear any speech (too quiet or too noisy), '
+      'click **Could not hear speech**.'
+  )
   if st.session_state.vcv_test_mode == 'Adaptive':
-    st.write("Click the 'Practice' button to begin.")
-    st.write('1. Click **Next** to hear a sound.')
-    st.write(
-        '2. Click the consonant button that matches the sound you heard. '
-        '**If you are unsure, please make your best guess.**'
-    )
     st.info(
         'Note: The test is designed so that you will get approximately '
         '50% of the answers correct. It is normal to find it difficult!'
     )
-  else:
-    st.write("Click the 'Start test' button to begin. Then click the "
-             'consonant button that best matches the sound you hear.')
 
 def _on_volume_change():
   """Copies select slider label to persistent dB key."""
@@ -655,6 +660,13 @@ def display_feedback():
     color = 'green'
     msg = 'Correct!'
     icon = '✅'
+  elif fb['user_answer'] == NO_SPEECH_RESPONSE:
+    color = 'red'
+    msg = (
+        'Use that button only when you cannot hear any speech. '
+        f"The answer was {fb['correct_answer']}."
+    )
+    icon = '❌'
   else:
     color = 'red'
     msg = f"Incorrect. The answer was {fb['correct_answer']}."
@@ -672,7 +684,7 @@ def display_feedback():
 
 
 def create_response_button_grid():
-  """Renders volume control and button circle."""
+  """Renders volume control, start controls, and the button circle."""
   volume_disabled = (
     st.session_state.vcv_freeze_settings
     and not st.session_state.vcv_is_practice_trial
@@ -703,7 +715,8 @@ def create_response_button_grid():
 def _inject_dynamic_circle_css(labels: list[str]):
   """Injects inline CSS to position N buttons evenly around a circle."""
   # Match the static CSS container: 500×480 px, button 70×70 px.
-  # Centre derived from Practice button (120×120 at left:190, top:175).
+  # Centre derived from the no-speech button (120×120 at left:190,
+  # top:175).
   cx, cy = 250, 235  # Centre of the ring (button-centre coords).
   radius = 175       # Distance from centre to button centre.
   btn_half = 35      # Half the button width/height (70/2).
@@ -726,8 +739,76 @@ def _inject_dynamic_circle_css(labels: list[str]):
   st.markdown(css, unsafe_allow_html=True)
 
 
+def _render_practice_or_start_button():
+  """Renders the Practice or Start test control above the ring."""
+  # Hide the control while a practice or test session is running.
+  if st.session_state.vcv_play_button_disabled:
+    return
+
+  if not st.session_state.vcv_practice_completed:
+    if st.button(
+        'Practice',
+        key='vcv_btn_practice_enabled',
+        icon=':material/play_arrow:'
+    ):
+      st.session_state.vcv_play_button_disabled = True
+      st.session_state.vcv_freeze_settings = True
+      st.session_state.vcv_is_practice_trial = True
+      st.session_state.vcv_practice_trials_count = 0
+      st.session_state.vcv_practice_feedback = None
+
+      active_set = _get_active_consonant_set()
+      random_consonant = random.choice(
+          list(active_set.keys())
+      )
+      st.session_state.vcv_pending_audio = {
+          'consonant': random_consonant,
+          'snr': PRACTICE_SNR_DB,
+          'ear': 'both'
+      }
+      st.rerun()
+    return
+
+  if st.button('Start test', key='vcv_btn_start_enabled'):
+    # Stop practice mode, start real test.
+    st.session_state.vcv_is_practice_trial = False
+    st.session_state.vcv_play_button_disabled = True
+    st.session_state.vcv_freeze_settings = True
+    st.session_state.vcv_practice_feedback = None
+
+    # Create WAV save directory for NAL + LOCAL.
+    if _is_nal_local():
+      ts = datetime.now().strftime('%Y%m%d_%H%M%S')
+      wav_dir = os.path.join(
+          'local_results', f'vcv_wavs_{ts}'
+      )
+      os.makedirs(wav_dir, exist_ok=True)
+      st.session_state.vcv_wav_save_dir = wav_dir
+      print(f'WAV save directory: {wav_dir}')
+
+    if st.session_state.vcv_test_mode == 'Adaptive':
+      prepare_next_trial()
+    else:
+      play_next_constant()
+    st.rerun()
+
+
+def _render_no_speech_button(btns_disabled: bool):
+  """Renders the centre 'could not hear speech' response button."""
+  if btns_disabled:
+    no_speech_key = 'vcv_btn_no_speech_disabled'
+  else:
+    no_speech_key = 'vcv_btn_no_speech_enabled'
+  if st.button(
+      NO_SPEECH_BUTTON_LABEL,
+      key=no_speech_key,
+      disabled=btns_disabled,
+  ):
+    handle_response_button_click(NO_SPEECH_RESPONSE)
+
+
 def create_unified_response_grid():
-  """Creates consonant buttons in a circular layout."""
+  """Creates start controls and consonant buttons in a circle."""
   # Buttons disabled if test completed or not started.
   btns_disabled = (
     st.session_state.vcv_test_completed
@@ -735,85 +816,10 @@ def create_unified_response_grid():
     or not st.session_state.vcv_play_button_disabled
   )
 
+  _render_practice_or_start_button()
+
   with st.container(key='vcv_circle'):
-    # Center button: Practice or Start test.
-    if not st.session_state.vcv_practice_completed:
-      # --- PRACTICE BUTTON STATE ---
-      if not st.session_state.vcv_play_button_disabled:
-        practice_btn_key = (
-          'vcv_btn_practice_enabled'
-        )
-      else:
-        practice_btn_key = (
-          'vcv_btn_practice_disabled'
-        )
-
-      if st.button(
-        'Practice',
-        key=practice_btn_key,
-        disabled=(
-          st.session_state.vcv_play_button_disabled
-        ),
-        icon=':material/play_arrow:'
-      ):
-        st.session_state.vcv_play_button_disabled = (
-          True
-        )
-        st.session_state.vcv_freeze_settings = True
-        st.session_state.vcv_is_practice_trial = True
-        st.session_state.vcv_practice_trials_count = 0
-        st.session_state.vcv_practice_feedback = None
-
-        active_set = _get_active_consonant_set()
-        random_consonant = random.choice(
-          list(active_set.keys())
-        )
-        st.session_state.vcv_pending_audio = {
-          'consonant': random_consonant,
-          'snr': PRACTICE_SNR_DB,
-          'ear': 'both'
-        }
-        st.rerun()
-
-    else:
-      # --- START TEST BUTTON STATE ---
-      if not st.session_state.vcv_play_button_disabled:
-        play_button_key = 'vcv_btn_start_enabled'
-      else:
-        play_button_key = 'vcv_btn_start_disabled'
-      if st.button(
-        'Start test',
-        key=play_button_key,
-        disabled=(
-          st.session_state.vcv_play_button_disabled
-        )
-      ):
-        # Stop practice mode, start real test.
-        st.session_state.vcv_is_practice_trial = (
-          False
-        )
-        st.session_state.vcv_play_button_disabled = (
-          True
-        )
-        st.session_state.vcv_freeze_settings = True
-        st.session_state.vcv_practice_feedback = None
-
-        # Create WAV save directory for NAL + LOCAL.
-        if _is_nal_local():
-          ts = datetime.now().strftime('%Y%m%d_%H%M%S')
-          wav_dir = os.path.join(
-              'local_results', f'vcv_wavs_{ts}'
-          )
-          os.makedirs(wav_dir, exist_ok=True)
-          st.session_state.vcv_wav_save_dir = wav_dir
-          print(f'WAV save directory: {wav_dir}')
-
-        if (st.session_state.vcv_test_mode
-            == 'Adaptive'):
-          prepare_next_trial()
-        else:
-          play_next_constant()
-        st.rerun()
+    _render_no_speech_button(btns_disabled)
 
     # Inject dynamic circle positions when using a custom subset.
     circle_order = _get_active_circle_order()
@@ -828,8 +834,6 @@ def create_unified_response_grid():
         disabled=btns_disabled
       ):
         handle_response_button_click(label)
-
-
 
 
 def _process_and_play_vcv(clean_file_path: str, snr_db: float, ear: str):
