@@ -342,3 +342,145 @@ class TestGetCorrectAnswerStandardStimuli:
     """Synthetic bare-token filename resolves correctly."""
     assert demo_vcv.get_correct_answer('asha.wav') == 'SH'
 
+
+class _Rerun(Exception):
+  """Stands in for Streamlit's rerun, which stops the current run."""
+
+
+class _SessionState(dict):
+  """Dict with attribute access, matching Streamlit session_state."""
+
+  def __getattr__(self, name):
+    try:
+      return self[name]
+    except KeyError as exc:
+      raise AttributeError(name) from exc
+
+  def __setattr__(self, name, value):
+    self[name] = value
+
+
+class TestHandleNoSpeechResponse:
+  """Tests for NO_SPEECH handling in handle_response_button_click()."""
+
+  def _human_state(self, **overrides):
+    """Builds session state for a Human-stimuli VCV trial."""
+    state = _SessionState({
+        'last_played_audio': 'VCV_aba_1_60SNR.wav',
+        'vcv_stimuli_type': 'Human',
+        'vcv_tone_start_time': None,
+        'vcv_is_practice_trial': False,
+        'vcv_practice_trials_count': 0,
+        'vcv_practice_feedback': None,
+        'vcv_practice_completed': False,
+        'vcv_play_button_disabled': True,
+        'vcv_custom_consonants': [],
+        'vcv_test_mode': 'Adaptive',
+        'vcv_last_condition_key': ('left', 'B'),
+        'vcv_last_snr': -6.0,
+        'vcv_responses': [],
+        'vcv_n_total_trials': 90,
+        'vcv_merge_lr': False,
+        'vcv_current_ear': 'left',
+        'vcv_completed_stimuli_current_ear': 0,
+        'vcv_estimators': {},
+    })
+    state.update(overrides)
+    return state
+
+  @patch('demo_vcv.st')
+  def test_practice_no_speech_is_incorrect(self, mock_st):
+    """Practice NO_SPEECH is incorrect and queues another trial."""
+    state = self._human_state(vcv_is_practice_trial=True)
+    mock_st.session_state = state
+    mock_st.rerun.side_effect = _Rerun
+
+    with pytest.raises(_Rerun):
+      demo_vcv.handle_response_button_click(
+          demo_vcv.NO_SPEECH_RESPONSE
+      )
+
+    fb = state.vcv_practice_feedback
+    assert fb['is_correct'] is False
+    assert fb['user_answer'] == demo_vcv.NO_SPEECH_RESPONSE
+    assert fb['correct_answer'] == 'B'
+    assert state.vcv_practice_trials_count == 1
+    assert state.vcv_pending_audio is not None
+    assert state.vcv_pending_audio['snr'] == demo_vcv.PRACTICE_SNR_DB
+    mock_st.rerun.assert_called()
+
+  @patch('demo_vcv.prepare_next_trial')
+  @patch('demo_vcv._rename_saved_wav')
+  @patch('demo_vcv.st')
+  def test_adaptive_no_speech_is_a_miss(
+      self, mock_st, mock_rename, mock_prepare
+  ):
+    """Adaptive NO_SPEECH is logged as incorrect and updates ZEST."""
+    estimator = MagicMock()
+    state = self._human_state(
+        vcv_estimators={('left', 'B'): estimator}
+    )
+    mock_st.session_state = state
+
+    demo_vcv.handle_response_button_click(
+        demo_vcv.NO_SPEECH_RESPONSE
+    )
+
+    assert len(state.vcv_responses) == 1
+    row = state.vcv_responses[0]
+    assert row[2] == 'B'
+    assert row[3] == demo_vcv.NO_SPEECH_RESPONSE
+    assert row[4] is False
+    estimator.update.assert_called_once_with(-6.0, False)
+    mock_rename.assert_called_once_with(
+        demo_vcv.NO_SPEECH_RESPONSE
+    )
+    mock_prepare.assert_called_once()
+
+  @patch('demo_vcv.play_next_constant')
+  @patch('demo_vcv._rename_saved_wav')
+  @patch('demo_vcv.st')
+  def test_constant_no_speech_advances_trial(
+      self, mock_st, mock_rename, mock_play
+  ):
+    """Constant-SNR NO_SPEECH consumes the trial and continues."""
+    state = self._human_state(vcv_test_mode='Constant SNR')
+    mock_st.session_state = state
+
+    demo_vcv.handle_response_button_click(
+        demo_vcv.NO_SPEECH_RESPONSE
+    )
+
+    assert len(state.vcv_responses) == 1
+    row = state.vcv_responses[0]
+    assert row[2] == demo_vcv.NO_SPEECH_RESPONSE
+    assert row[3] == 'B'
+    assert state.vcv_completed_stimuli_current_ear == 1
+    mock_rename.assert_called_once_with(
+        demo_vcv.NO_SPEECH_RESPONSE
+    )
+    mock_play.assert_called_once()
+
+
+@patch('demo_vcv.st')
+def test_rename_saved_wav_uses_no_speech_token(mock_st, tmp_path):
+  """Saved WAV filenames include NO_SPEECH rather than the button text."""
+  old_path = tmp_path / (
+      'trial_001_target_B_response_PENDING_snr_n6.0dB_left.wav'
+  )
+  old_path.write_bytes(b'x')
+  mock_st.session_state = _SessionState({
+      'vcv_last_saved_wav_path': str(old_path),
+  })
+
+  demo_vcv._rename_saved_wav(  # pylint: disable=protected-access
+      demo_vcv.NO_SPEECH_RESPONSE
+  )
+
+  new_path = tmp_path / (
+      'trial_001_target_B_response_NO_SPEECH_snr_n6.0dB_left.wav'
+  )
+  assert new_path.is_file()
+  assert not old_path.exists()
+  assert mock_st.session_state.vcv_last_saved_wav_path is None
+

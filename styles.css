@@ -268,46 +268,57 @@
   height: 70px;
 }
 
-/* Style for the start button (enabled and disabled states) */
+/* Style for the start button. */
+.st-key-vcv_btn_start_enabled,
+.st-key-vcv_btn_practice_enabled {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 0.5rem;
+}
+
 .st-key-vcv_btn_start_enabled button {
   background-color: #FFA500;
   /* Orange. */
-  width: 120px;
-  height: 120px;
-  border-radius: 50%;
-  font-size: 0.8rem;
-  padding: 0px;
+  width: 200px;
 }
 
-.st-key-vcv_btn_start_disabled button {
-  background-color: #FFDEAD;
-  /* Navajo white. */
-  width: 120px;
-  height: 120px;
-  border-radius: 50%;
-  font-size: 0.8rem;
-  padding: 0px;
-}
-
-/* Style for the practice button (enabled and disabled states) */
+/* Style for the practice button. */
 .st-key-vcv_btn_practice_enabled button {
   background-color: #B0C4DE;
   /* Light steel blue. */
-  width: 120px;
-  height: 120px;
-  border-radius: 50%;
-  font-size: 0.8rem;
-  padding: 0px;
+  width: 200px;
 }
 
-.st-key-vcv_btn_practice_disabled button {
-  background-color: #D3D3D3;
-  /* Light gray. */
+/* Centre "could not hear speech" button. */
+.st-key-vcv_btn_no_speech_enabled button,
+.st-key-vcv_btn_no_speech_disabled button {
   width: 120px;
   height: 120px;
   border-radius: 50%;
-  font-size: 0.8rem;
-  padding: 0px;
+  font-size: 0.9rem;
+  padding: 8px;
+  white-space: normal !important;
+  line-height: 1.15;
+  color: black;
+}
+
+.st-key-vcv_btn_no_speech_enabled button {
+  background-color: #B0C4DE;
+  /* Light steel blue. */
+}
+
+.st-key-vcv_btn_no_speech_disabled button {
+  background-color: #D3D3D3;
+  /* Light gray. */
+}
+
+.st-key-vcv_btn_no_speech_enabled button > *,
+.st-key-vcv_btn_no_speech_disabled button > * {
+  white-space: normal !important;
+  text-align: center !important;
+  line-height: 1.15 !important;
+  font-size: 0.9rem !important;
+  color: black !important;
 }
 
 /* Circular layout container for VCV buttons. */
@@ -318,11 +329,9 @@
   margin: 0 auto;
 }
 
-/* Center buttons in the middle of the circle. */
-.st-key-vcv_circle .st-key-vcv_btn_practice_enabled,
-.st-key-vcv_circle .st-key-vcv_btn_practice_disabled,
-.st-key-vcv_circle .st-key-vcv_btn_start_enabled,
-.st-key-vcv_circle .st-key-vcv_btn_start_disabled {
+/* Centre the no-speech button in the middle of the circle. */
+.st-key-vcv_circle .st-key-vcv_btn_no_speech_enabled,
+.st-key-vcv_circle .st-key-vcv_btn_no_speech_disabled {
   position: absolute !important;
   left: 190px;
   top: 175px;
