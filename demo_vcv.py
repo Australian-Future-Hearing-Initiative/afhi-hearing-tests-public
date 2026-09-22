@@ -28,7 +28,7 @@ CLEAN_WAV_DIR = os.path.join(common.PREFERRED_STIMULI_DIR, 'clean_standardised')
 SYNTHETIC_WAV_DIR = os.path.join(common.PREFERRED_STIMULI_DIR, 'synthetic')
 SNR_OPTIONS_DB = ('-12', '-9', '-6', '-3', '0', '+3', '+6', '+9', '+12', '+60')
 DEFAULT_SNR_OPTIONS_DB = ('-12', '-6', '0', '+6')
-DEFAULT_N_TEST_TRIALS = 90
+DEFAULT_N_TEST_TRIALS = 200
 NOISE_RAMP_DURATION_S = 0.1
 N_PRACTICE_TRIALS = 5
 PRACTICE_SNR_DB = 10.0
@@ -58,6 +58,7 @@ DEFAULTS = {
     # State flags.
     'vcv_freeze_settings': False,
     'vcv_test_completed': False,
+    'vcv_stopped_by_convergence': False,
     'vcv_play_button_disabled': False,
     'vcv_backup_saved': False,
     'vcv_initial_state_set': False,
@@ -68,7 +69,9 @@ DEFAULTS = {
     'vcv_responses': [],
     'vcv_is_practice_trial': False,
     'vcv_play_count': 0,
+    'vcv_current_ear': common.DEFAULT_INITIAL_EAR,
     'vcv_completed_stimuli_current_ear': 0,
+    'vcv_ear_switched_notice': False,
     'vcv_pending_audio': None,
     'base_files_by_consonant': {},
     'vcv_estimators': None,
@@ -102,6 +105,18 @@ NOISE_TYPE_FOR_SYNTHESIS = 'Advanced Speech-Shaped Noise'
 CONSONANT_LABELS = bayesian_vcv_estimator.CONSONANT_LABELS
 CONSONANT_SNR_FLOOR_DB = (
     bayesian_vcv_estimator.CONSONANT_SNR_FLOOR_DB
+)
+SD_CONVERGENCE_THRESHOLD = (
+    bayesian_vcv_estimator.SD_CONVERGENCE_THRESHOLD
+)
+MIN_SAMPLES_PER_CONSONANT = (
+    bayesian_vcv_estimator.MIN_SAMPLES_PER_CONSONANT
+)
+are_all_consonants_converged = (
+    bayesian_vcv_estimator.are_all_consonants_converged
+)
+get_estimator_sample_count = (
+    bayesian_vcv_estimator.get_estimator_sample_count
 )
 
 # Consonant display order, derived from class definitions.
@@ -299,7 +314,9 @@ def reset_results_only():
   st.session_state.vcv_responses = []
   st.session_state.vcv_play_count = 0
   st.session_state.vcv_completed_stimuli_current_ear = 0
+  st.session_state.vcv_ear_switched_notice = False
   st.session_state.vcv_test_completed = False
+  st.session_state.vcv_stopped_by_convergence = False
   st.session_state.vcv_practice_completed = False
   st.session_state.vcv_practice_trials_count = 0
   st.session_state.vcv_is_practice_trial = False
@@ -466,8 +483,28 @@ def complete_test():
 
 def prepare_next_trial():
   """Schedules the next trial and sets up pending audio."""
+  target_ear = (
+      'both' if st.session_state.vcv_merge_lr
+      else st.session_state.vcv_current_ear
+  )
+  if are_all_consonants_converged(st.session_state.vcv_estimators, target_ear):
+    if not st.session_state.vcv_merge_lr and target_ear == 'left':
+      if are_all_consonants_converged(st.session_state.vcv_estimators, 'right'):
+        st.session_state.vcv_stopped_by_convergence = True
+        complete_test()
+        return
+      st.session_state.vcv_current_ear = 'right'
+      st.session_state.vcv_completed_stimuli_current_ear = 0
+      st.session_state.vcv_ear_switched_notice = True
+      target_ear = 'right'
+    else:
+      st.session_state.vcv_stopped_by_convergence = True
+      complete_test()
+      return
+
   condition_key, selected_snr_db = schedule_next_trial(
-      st.session_state.vcv_estimators
+      st.session_state.vcv_estimators,
+      target_ear=target_ear,
   )
   st.session_state.vcv_last_condition_key = condition_key
   st.session_state.vcv_last_snr = selected_snr_db
@@ -548,8 +585,55 @@ def handle_response_button_click(button_label):
     ]
     estimator.update(st.session_state.vcv_last_snr, is_correct)
 
-    if (len(st.session_state.vcv_responses) >=
-        st.session_state.vcv_n_total_trials):
+    test_finished = False
+    n_per_ear = st.session_state.vcv_n_total_trials // 2
+    if st.session_state.vcv_merge_lr:
+      st.session_state.vcv_play_count += 1
+      merged_converged = are_all_consonants_converged(
+          st.session_state.vcv_estimators, 'both'
+      )
+      if merged_converged or st.session_state.vcv_play_count >= n_per_ear:
+        test_finished = True
+        if merged_converged:
+          st.session_state.vcv_stopped_by_convergence = True
+    else:
+      st.session_state.vcv_completed_stimuli_current_ear += 1
+      current_ear = st.session_state.vcv_current_ear
+      current_ear_converged = are_all_consonants_converged(
+          st.session_state.vcv_estimators, current_ear
+      )
+      current_ear_budget_reached = (
+          st.session_state.vcv_completed_stimuli_current_ear >= n_per_ear
+      )
+
+      if current_ear_converged or current_ear_budget_reached:
+        if current_ear == 'left':
+          # Left ear done (converged or trial limit reached). Check right ear.
+          if are_all_consonants_converged(
+              st.session_state.vcv_estimators, 'right'
+          ):
+            test_finished = True
+            st.session_state.vcv_stopped_by_convergence = True
+          else:
+            st.session_state.vcv_current_ear = 'right'
+            st.session_state.vcv_completed_stimuli_current_ear = 0
+            st.session_state.vcv_ear_switched_notice = True
+        else:
+          # Right ear done!
+          test_finished = True
+          if current_ear_converged and are_all_consonants_converged(
+              st.session_state.vcv_estimators, 'left'
+          ):
+            st.session_state.vcv_stopped_by_convergence = True
+      elif st.session_state.vcv_completed_stimuli_current_ear > 0:
+        st.session_state.vcv_ear_switched_notice = False
+
+    # Universal check: if all consonants across all estimators have reached SD <= 3.0 dB.
+    if are_all_consonants_converged(st.session_state.vcv_estimators, None):
+      test_finished = True
+      st.session_state.vcv_stopped_by_convergence = True
+
+    if test_finished:
       complete_test()
     else:
       prepare_next_trial()
@@ -567,20 +651,22 @@ def handle_response_button_click(button_label):
     _rename_saved_wav(button_label)
 
     test_finished = False
+    n_per_ear = st.session_state.vcv_n_total_trials // 2
     if st.session_state.vcv_merge_lr:
       st.session_state.vcv_play_count += 1
-      if (st.session_state.vcv_play_count >=
-          st.session_state.vcv_n_total_trials // 2):
+      if (st.session_state.vcv_play_count >= n_per_ear):
         test_finished = True
     else:
       st.session_state.vcv_completed_stimuli_current_ear += 1
-      if (st.session_state.vcv_completed_stimuli_current_ear >=
-          st.session_state.vcv_n_total_trials // 2):
+      if (st.session_state.vcv_completed_stimuli_current_ear >= n_per_ear):
         if st.session_state.vcv_current_ear == 'left':
           st.session_state.vcv_current_ear = 'right'
           st.session_state.vcv_completed_stimuli_current_ear = 0
+          st.session_state.vcv_ear_switched_notice = True
         else:
           test_finished = True
+      elif st.session_state.vcv_completed_stimuli_current_ear > 0:
+        st.session_state.vcv_ear_switched_notice = False
 
     if test_finished:
       complete_test()
@@ -589,22 +675,22 @@ def handle_response_button_click(button_label):
 
 def create_progress_bar():
   """Creates a progress bar for the consonant confusion test."""
-  if st.session_state.vcv_test_mode == 'Adaptive':
-    total_tests = st.session_state.vcv_n_total_trials
-    current_progress = len(st.session_state.vcv_responses)
+  n_per_ear = st.session_state.vcv_n_total_trials // 2
+  if st.session_state.vcv_merge_lr:
+    total_tests = n_per_ear
+    current_progress = (
+        len(st.session_state.vcv_responses)
+        if st.session_state.vcv_test_mode == 'Adaptive'
+        else st.session_state.vcv_play_count
+    )
   else:
-    n_per_ear = st.session_state.vcv_n_total_trials // 2
-    if st.session_state.vcv_merge_lr:
-      total_tests = n_per_ear
-      current_progress = st.session_state.vcv_play_count
-    else:
-      total_tests = n_per_ear * 2
-      ear_offset = (
-          n_per_ear if st.session_state.vcv_current_ear == 'right' else 0
-      )
-      current_progress = (
-          ear_offset + st.session_state.vcv_completed_stimuli_current_ear
-      )
+    total_tests = n_per_ear * 2
+    ear_offset = (
+        n_per_ear if st.session_state.vcv_current_ear == 'right' else 0
+    )
+    current_progress = (
+        ear_offset + st.session_state.vcv_completed_stimuli_current_ear
+    )
 
   # Override progress bar for practice session.
   if not st.session_state.vcv_practice_completed:
@@ -620,10 +706,36 @@ def create_progress_bar():
   if not st.session_state.vcv_practice_completed:
     st.write(f'Practice Progress: {current_progress}/{total_tests}')
   else:
-    st.write(
-      f'{int(progress_percent * 100)}% Complete '
-      f'({current_progress}/{total_tests})'
-    )
+    if st.session_state.vcv_merge_lr:
+      st.write(
+          f'Testing **Both ears** — {int(progress_percent * 100)}% Complete '
+          f'({current_progress}/{total_tests})'
+      )
+    else:
+      ear_label = (
+          'Left ear'
+          if st.session_state.vcv_current_ear == 'left'
+          else 'Right ear'
+      )
+      if st.session_state.vcv_test_completed:
+        if st.session_state.get('vcv_stopped_by_convergence'):
+          st.write(
+              f'**Test Complete — All consonants reached target uncertainty (SD ≤ {SD_CONVERGENCE_THRESHOLD:.1f} dB with ≥{MIN_SAMPLES_PER_CONSONANT} samples)!** '
+              f'({len(st.session_state.vcv_responses)} trials collected)'
+          )
+        else:
+          st.write(
+              f'Test Complete — 100% ({len(st.session_state.vcv_responses)}/{total_tests} trials)'
+          )
+      else:
+        current_ear_trial = min(
+            n_per_ear,
+            st.session_state.vcv_completed_stimuli_current_ear + 1,
+        )
+        st.write(
+            f'Testing **{ear_label}** (Trial {current_ear_trial}/{n_per_ear}) — '
+            f'{int(progress_percent * 100)}% Complete ({current_progress}/{total_tests})'
+        )
 
 def create_test_instructions():
   """Writes how to start the test and how to respond."""
@@ -637,10 +749,19 @@ def create_test_instructions():
       '2. If you could not hear any speech (too quiet or too noisy), '
       'click **Could not hear speech**.'
   )
+  if not st.session_state.vcv_merge_lr:
+    st.write(
+        '3. Left and right ears are tested separately: **Left ear first**, '
+        'followed by the **Right ear**.'
+    )
   if st.session_state.vcv_test_mode == 'Adaptive':
     st.info(
         'Note: The test is designed so that you will get approximately '
-        '50% of the answers correct. It is normal to find it difficult!'
+        '50% of the answers correct. It is normal to find it difficult! '
+        f'Testing stops automatically and results are displayed once all consonants '
+        f'reach the target uncertainty threshold (SD ≤ {SD_CONVERGENCE_THRESHOLD:.1f} dB) '
+        f'with at least {MIN_SAMPLES_PER_CONSONANT} samples each, '
+        'or when total trials are completed.'
     )
 
 def _on_volume_change():
@@ -707,6 +828,12 @@ def create_response_button_grid():
       'Adjusts the volume of the speech.'
     )
   )
+
+  if (
+      st.session_state.get('vcv_ear_switched_notice')
+      and not st.session_state.vcv_test_completed
+  ):
+    st.info('🎧 **Left ear testing complete! Now testing Right ear.**')
 
   create_unified_response_grid()
   display_feedback()
@@ -775,6 +902,13 @@ def _render_practice_or_start_button():
     st.session_state.vcv_play_button_disabled = True
     st.session_state.vcv_freeze_settings = True
     st.session_state.vcv_practice_feedback = None
+    st.session_state.vcv_current_ear = (
+        'both' if st.session_state.vcv_merge_lr else common.DEFAULT_INITIAL_EAR
+    )
+    st.session_state.vcv_completed_stimuli_current_ear = 0
+    st.session_state.vcv_play_count = 0
+    st.session_state.vcv_ear_switched_notice = False
+    st.session_state.vcv_stopped_by_convergence = False
 
     # Create WAV save directory for NAL + LOCAL.
     if _is_nal_local():
@@ -1032,7 +1166,7 @@ def display_settings():
       on_change=reset_results_only,
   )
 
-  st.slider('Total number of trials:', 10, 200,
+  st.slider('Total number of trials:', 10, 300,
             key='vcv_n_total_trials',
             step=10,
             disabled=settings_disabled,
@@ -1058,29 +1192,64 @@ def play_next_constant():
   snr = float(random.choice(st.session_state.vcv_snr_levels))
   clean_path = get_random_audio_file_for_practice()
   if clean_path:
-    _process_and_play_vcv(clean_path, snr, st.session_state.vcv_current_ear)
+    ear = (
+        'both' if st.session_state.vcv_merge_lr
+        else st.session_state.vcv_current_ear
+    )
+    _process_and_play_vcv(clean_path, snr, ear)
 
-def schedule_next_trial(estimators: dict) -> tuple[tuple[str, str], float]:
+def schedule_next_trial(
+    estimators: dict,
+    sd_threshold: float = SD_CONVERGENCE_THRESHOLD,
+    target_ear: str | None = None,
+    min_samples: int = MIN_SAMPLES_PER_CONSONANT,
+) -> tuple[tuple[str, str], float]:
   """
   Selects the next trial using Weighted Random Sampling based on uncertainty.
+
+  Excludes consonants whose uncertainty (SD) has converged to or is less than
+  the standard value (sd_threshold = 3.0 dB) AND have had at least min_samples (6)
+  trials presented. If all consonants have reached convergence, falls back
+  to sampling across all consonants to allow testing to continue smoothly until
+  the target number of trials is reached.
+
+  If target_ear is provided, only estimators matching that ear are considered.
   """
-  candidates = []
-  weights = []
+  unconverged_candidates = []
+  unconverged_weights = []
+  all_candidates = []
+  all_weights = []
 
   for key, estimator in estimators.items():
+    if target_ear is not None and key[0] != target_ear:
+      continue
+
     _, uncertainty = estimator.get_estimate()
 
     # We raise uncertainty to a power (e.g., 2) to exaggerate the differences.
-    # This makes high uncertainty items MUCH more likely to be picked,
-    # but still allows others a chance.
     weight = uncertainty ** 2
-    candidates.append(key)
-    weights.append(weight)
+    all_candidates.append(key)
+    all_weights.append(weight)
 
-  if candidates:
-    selected_key = random.choices(candidates, weights=weights, k=1)[0]
+    # Exclude consonants only after reaching target SD AND receiving at least min_samples.
+    sample_count = get_estimator_sample_count(estimator)
+    if uncertainty > sd_threshold or sample_count < min_samples:
+      unconverged_candidates.append(key)
+      unconverged_weights.append(weight)
+
+  if unconverged_candidates:
+    selected_key = random.choices(
+        unconverged_candidates, weights=unconverged_weights, k=1
+    )[0]
+  elif all_candidates:
+    selected_key = random.choices(
+        all_candidates, weights=all_weights, k=1
+    )[0]
   else:
-    return random.choice(list(estimators.keys())), 0.0
+    fallback = [
+        k for k in estimators if target_ear is None or k[0] == target_ear
+    ] or list(estimators.keys())
+    return random.choice(fallback), 0.0
 
   selected_estimator = estimators[selected_key]
   next_snr = selected_estimator.get_next_snr()
@@ -1131,7 +1300,7 @@ def create_main_demo():
       vcv_results.display_adaptive_results(
           st.session_state.vcv_final_estimates,
           st.session_state.vcv_df,
-          st.session_state.vcv_n_total_trials,
+          len(st.session_state.vcv_responses),
           st.session_state.vcv_confusion_results,
           active_ordered
       )

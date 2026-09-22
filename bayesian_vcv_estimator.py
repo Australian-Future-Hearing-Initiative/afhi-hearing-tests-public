@@ -22,7 +22,78 @@ STEP_SNR_DB = 0.5
 THRESHOLD_GRID = np.arange(MIN_SNR_DB, MAX_SNR_DB + STEP_SNR_DB, STEP_SNR_DB)
 
 # Default Prior settings.
-PRIOR_SD = 20.0
+#PRIOR_SD = 20.0
+PRIOR_SD = 15.0 # SC reduce initial prior to reduce step size as Starting SNR is now set quite low to decrease overall search window
+# Standard SD convergence threshold for trial scheduling.
+# Consonants with SD <= SD_CONVERGENCE_THRESHOLD and at least
+# MIN_SAMPLES_PER_CONSONANT samples are considered converged
+# and excluded from subsequent trial selection to focus testing on higher-variance consonants.
+SD_CONVERGENCE_THRESHOLD = 3.0
+
+# Minimum number of samples (trials) required for each consonant before it can be
+# considered converged and taken out of the testing pool.
+MIN_SAMPLES_PER_CONSONANT = 6
+
+
+def get_estimator_sample_count(estimator) -> int:
+  """Returns the number of samples (trials) collected by an estimator.
+
+  Inspects .history, .num_trials, or calls .get_num_trials(), with safe fallbacks
+  for test mocks.
+  """
+  if hasattr(estimator, 'history'):
+    hist = estimator.history
+    if isinstance(hist, (list, tuple)):
+      return len(hist)
+  if hasattr(estimator, 'get_num_trials'):
+    try:
+      val = estimator.get_num_trials()
+      if isinstance(val, int):
+        return val
+    except Exception:
+      pass
+  if hasattr(estimator, 'num_trials'):
+    try:
+      val = estimator.num_trials
+      if isinstance(val, int):
+        return val
+    except Exception:
+      pass
+  return 0
+
+
+def are_all_consonants_converged(
+    estimators: dict,
+    target_ear: str | None = None,
+    sd_threshold: float = SD_CONVERGENCE_THRESHOLD,
+    min_samples: int = MIN_SAMPLES_PER_CONSONANT,
+) -> bool:
+  """Checks whether all estimators for target_ear have reached SD <= sd_threshold
+
+  and have had at least min_samples samples collected.
+  If target_ear is None, checks across all estimators in the dictionary.
+  Safely handles unconfigured mocks in unit tests.
+  """
+  if not estimators:
+    return False
+  matching = [
+      est for key, est in estimators.items()
+      if target_ear is None or key[0] == target_ear
+  ]
+  if not matching:
+    return False
+  for est in matching:
+    estimate = est.get_estimate()
+    if not isinstance(estimate, (tuple, list)) or len(estimate) < 2:
+      return False
+    sd = estimate[1]
+    if not isinstance(sd, (int, float)):
+      return False
+    if sd > sd_threshold:
+      return False
+    if get_estimator_sample_count(est) < min_samples:
+      return False
+  return True
 
 CONSONANT_LABELS = {
     'B': 'aba', 'D': 'ada', 'G': 'aga', 'K': 'aka',
@@ -46,18 +117,18 @@ CONSONANT_LABELS = {
 CONSONANT_CLASSES = {
     'C1': {
         'members': ['B', 'V', 'M', 'TH', 'DH', 'F'],
-        'floor_db': -6.0,
-        'initial_snr_db': 15.0,
+        'floor_db': -10.0,
+        'initial_snr_db': 8.0,
     },
     'C2': {
         'members': ['Z', 'T', 'S', 'SH', 'ZH'],
-        'floor_db': -18.0,
-        'initial_snr_db': 5.0,
+        'floor_db': -22.0,
+        'initial_snr_db': -2.0,
     },
     'C3': {
         'members': ['N', 'D', 'K', 'G', 'P'],
-        'floor_db': -12.0,
-        'initial_snr_db': 10.0,
+        'floor_db': -15.0,
+        'initial_snr_db': 5.0,
     },
 }
 
@@ -180,3 +251,12 @@ class ZestEstimator:
     variance = np.sum(posterior * (self.grid - mean_threshold)**2)
     std_dev = math.sqrt(variance)
     return mean_threshold, std_dev
+
+  @property
+  def num_trials(self) -> int:
+    """Returns the number of completed trials for this estimator."""
+    return len(self.history)
+
+  def get_num_trials(self) -> int:
+    """Returns the number of completed trials for this estimator."""
+    return len(self.history)
