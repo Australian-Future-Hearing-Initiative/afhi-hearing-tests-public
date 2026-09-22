@@ -1209,9 +1209,7 @@ def schedule_next_trial(
 
   Excludes consonants whose uncertainty (SD) has converged to or is less than
   the standard value (sd_threshold = 3.0 dB) AND have had at least min_samples (6)
-  trials presented. If all consonants have reached convergence, falls back
-  to sampling across all consonants to allow testing to continue smoothly until
-  the target number of trials is reached.
+  trials presented. 
 
   If target_ear is provided, only estimators matching that ear are considered.
   """
