@@ -22,23 +22,26 @@ STEP_SNR_DB = 0.5
 THRESHOLD_GRID = np.arange(MIN_SNR_DB, MAX_SNR_DB + STEP_SNR_DB, STEP_SNR_DB)
 
 # Default Prior settings.
-PRIOR_SD = 15.0 # SC reduce initial prior to reduce step size as Starting SNR is now set quite low to decrease overall search window
+# Reduce initial prior to reduce step size as Starting SNR is now set
+# quite low to decrease overall search window.
+PRIOR_SD = 15.0
 # Standard SD convergence threshold for trial scheduling.
 # Consonants with SD <= SD_CONVERGENCE_THRESHOLD and at least
-# MIN_SAMPLES_PER_CONSONANT samples are considered converged
-# and excluded from subsequent trial selection to focus testing on higher-variance consonants.
+# MIN_SAMPLES_PER_CONSONANT samples are considered converged and excluded
+# from subsequent trial selection to focus testing on higher-variance
+# consonants.
 SD_CONVERGENCE_THRESHOLD = 3.0
 
-# Minimum number of samples (trials) required for each consonant before it can be
-# considered converged and taken out of the testing pool.
+# Minimum number of samples (trials) required for each consonant before it
+# can be considered converged and taken out of the testing pool.
 MIN_SAMPLES_PER_CONSONANT = 6
 
 
 def get_estimator_sample_count(estimator) -> int:
   """Returns the number of samples (trials) collected by an estimator.
 
-  Inspects .history, .num_trials, or calls .get_num_trials(), with safe fallbacks
-  for test mocks.
+  Inspects .history, .num_trials, or calls .get_num_trials(), with safe
+  fallbacks for test mocks.
   """
   if hasattr(estimator, 'history'):
     hist = estimator.history
@@ -49,14 +52,14 @@ def get_estimator_sample_count(estimator) -> int:
       val = estimator.get_num_trials()
       if isinstance(val, int):
         return val
-    except Exception:
+    except (AttributeError, TypeError, ValueError):
       pass
   if hasattr(estimator, 'num_trials'):
     try:
       val = estimator.num_trials
       if isinstance(val, int):
         return val
-    except Exception:
+    except (AttributeError, TypeError, ValueError):
       pass
   return 0
 
@@ -67,9 +70,9 @@ def are_all_consonants_converged(
     sd_threshold: float = SD_CONVERGENCE_THRESHOLD,
     min_samples: int = MIN_SAMPLES_PER_CONSONANT,
 ) -> bool:
-  """Checks whether all estimators for target_ear have reached SD <= sd_threshold
+  """Checks whether all estimators for target_ear have reached convergence.
 
-  and have had at least min_samples samples collected.
+  Requires SD <= sd_threshold and at least min_samples samples collected.
   If target_ear is None, checks across all estimators in the dictionary.
   Safely handles unconfigured mocks in unit tests.
   """
@@ -156,12 +159,8 @@ _class_consonants = {
     c for cfg in CONSONANT_CLASSES.values()
     for c in cfg['members']
 }
-_missing = (
-    set(CONSONANT_LABELS.keys()) - _class_consonants
-)
-_extra = (
-    _class_consonants - set(CONSONANT_LABELS.keys())
-)
+_missing = set(CONSONANT_LABELS.keys()) - _class_consonants
+_extra = _class_consonants - set(CONSONANT_LABELS.keys())
 if _missing:
   raise ValueError(
       'Consonants missing from CONSONANT_CLASSES: '
@@ -177,12 +176,16 @@ if _extra:
 
 
 class ZestEstimator:
-  """
-  Implements the ZEST (Zippy Estimation by Sequential Testing) procedure.
-  """
-  def __init__(self, prior_mean=0.0, prior_sd=PRIOR_SD,
-               slope=ASSUMED_SLOPE, chance_rate=CHANCE_RATE,
-               lapse_rate=LAPSE_RATE):
+  """Implements the ZEST (Zippy Estimation by Sequential Testing) procedure."""
+
+  def __init__(
+      self,
+      prior_mean=0.0,
+      prior_sd=PRIOR_SD,
+      slope=ASSUMED_SLOPE,
+      chance_rate=CHANCE_RATE,
+      lapse_rate=LAPSE_RATE,
+  ):
     self.grid = THRESHOLD_GRID
     self.chance_rate = chance_rate
     self.lapse_rate = lapse_rate
@@ -215,9 +218,7 @@ class ZestEstimator:
     return np.exp(self.log_posterior)
 
   def get_next_snr(self) -> float:
-    """
-    Determines the optimal SNR for the next trial (mean of posterior).
-    """
+    """Determines the optimal SNR for the next trial (mean of posterior)."""
     posterior = self._get_posterior_pdf()
     mean_threshold = np.sum(posterior * self.grid)
     return mean_threshold
@@ -242,9 +243,7 @@ class ZestEstimator:
     self.log_posterior -= np.logaddexp.reduce(self.log_posterior)
 
   def get_estimate(self) -> tuple[float, float]:
-    """
-    Returns the current threshold estimate (mean) and uncertainty (SD).
-    """
+    """Returns the current threshold estimate (mean) and uncertainty (SD)."""
     posterior = self._get_posterior_pdf()
     mean_threshold = np.sum(posterior * self.grid)
     variance = np.sum(posterior * (self.grid - mean_threshold)**2)
