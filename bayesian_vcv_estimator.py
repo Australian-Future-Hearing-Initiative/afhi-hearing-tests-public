@@ -22,7 +22,6 @@ STEP_SNR_DB = 0.5
 THRESHOLD_GRID = np.arange(MIN_SNR_DB, MAX_SNR_DB + STEP_SNR_DB, STEP_SNR_DB)
 
 # Default Prior settings.
-#PRIOR_SD = 20.0
 PRIOR_SD = 15.0 # SC reduce initial prior to reduce step size as Starting SNR is now set quite low to decrease overall search window
 # Standard SD convergence threshold for trial scheduling.
 # Consonants with SD <= SD_CONVERGENCE_THRESHOLD and at least
