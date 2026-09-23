@@ -628,7 +628,8 @@ def handle_response_button_click(button_label):
       elif st.session_state.vcv_completed_stimuli_current_ear > 0:
         st.session_state.vcv_ear_switched_notice = False
 
-    # Universal check: if all consonants across all estimators have reached SD <= 3.0 dB.
+    # Universal check: every consonant has reached an SD of 3.0 dB
+    # or less.
     if are_all_consonants_converged(st.session_state.vcv_estimators, None):
       test_finished = True
       st.session_state.vcv_stopped_by_convergence = True
@@ -654,11 +655,11 @@ def handle_response_button_click(button_label):
     n_per_ear = st.session_state.vcv_n_total_trials // 2
     if st.session_state.vcv_merge_lr:
       st.session_state.vcv_play_count += 1
-      if (st.session_state.vcv_play_count >= n_per_ear):
+      if st.session_state.vcv_play_count >= n_per_ear:
         test_finished = True
     else:
       st.session_state.vcv_completed_stimuli_current_ear += 1
-      if (st.session_state.vcv_completed_stimuli_current_ear >= n_per_ear):
+      if st.session_state.vcv_completed_stimuli_current_ear >= n_per_ear:
         if st.session_state.vcv_current_ear == 'left':
           st.session_state.vcv_current_ear = 'right'
           st.session_state.vcv_completed_stimuli_current_ear = 0
@@ -720,12 +721,17 @@ def create_progress_bar():
       if st.session_state.vcv_test_completed:
         if st.session_state.get('vcv_stopped_by_convergence'):
           st.write(
-              f'**Test Complete — All consonants reached target uncertainty (SD ≤ {SD_CONVERGENCE_THRESHOLD:.1f} dB with ≥{MIN_SAMPLES_PER_CONSONANT} samples)!** '
+              '**Test Complete — All consonants reached target '
+              'uncertainty '
+              f'(SD ≤ {SD_CONVERGENCE_THRESHOLD:.1f} dB with '
+              f'≥{MIN_SAMPLES_PER_CONSONANT} samples)!** '
               f'({len(st.session_state.vcv_responses)} trials collected)'
           )
         else:
           st.write(
-              f'Test Complete — 100% ({len(st.session_state.vcv_responses)}/{total_tests} trials)'
+              'Test Complete — 100% '
+              f'({len(st.session_state.vcv_responses)}/{total_tests} '
+              'trials)'
           )
       else:
         current_ear_trial = min(
@@ -733,8 +739,10 @@ def create_progress_bar():
             st.session_state.vcv_completed_stimuli_current_ear + 1,
         )
         st.write(
-            f'Testing **{ear_label}** (Trial {current_ear_trial}/{n_per_ear}) — '
-            f'{int(progress_percent * 100)}% Complete ({current_progress}/{total_tests})'
+            f'Testing **{ear_label}** '
+            f'(Trial {current_ear_trial}/{n_per_ear}) — '
+            f'{int(progress_percent * 100)}% Complete '
+            f'({current_progress}/{total_tests})'
         )
 
 def create_test_instructions():
@@ -758,8 +766,9 @@ def create_test_instructions():
     st.info(
         'Note: The test is designed so that you will get approximately '
         '50% of the answers correct. It is normal to find it difficult! '
-        f'Testing stops automatically and results are displayed once all consonants '
-        f'reach the target uncertainty threshold (SD ≤ {SD_CONVERGENCE_THRESHOLD:.1f} dB) '
+        'Testing stops automatically and results are displayed '
+        'once all consonants reach the target uncertainty '
+        f'threshold (SD ≤ {SD_CONVERGENCE_THRESHOLD:.1f} dB) '
         f'with at least {MIN_SAMPLES_PER_CONSONANT} samples each, '
         'or when total trials are completed.'
     )
@@ -1207,9 +1216,9 @@ def schedule_next_trial(
   """
   Selects the next trial using Weighted Random Sampling based on uncertainty.
 
-  Excludes consonants whose uncertainty (SD) has converged to or is less than
-  the standard value (sd_threshold = 3.0 dB) AND have had at least min_samples (6)
-  trials presented. 
+  Excludes consonants whose uncertainty (SD) has converged to
+  or is less than the standard value (sd_threshold = 3.0 dB)
+  and that have had at least min_samples (6) trials presented. 
 
   If target_ear is provided, only estimators matching that ear are considered.
   """
@@ -1229,7 +1238,8 @@ def schedule_next_trial(
     all_candidates.append(key)
     all_weights.append(weight)
 
-    # Exclude consonants only after reaching target SD AND receiving at least min_samples.
+    # Exclude a consonant only after it reaches the target SD
+    # and has received at least min_samples trials.
     sample_count = get_estimator_sample_count(estimator)
     if uncertainty > sd_threshold or sample_count < min_samples:
       unconverged_candidates.append(key)
