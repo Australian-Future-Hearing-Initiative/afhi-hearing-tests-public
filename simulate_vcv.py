@@ -14,7 +14,7 @@ import bayesian_vcv_estimator
 
 # --- Simulation Configuration ---
 N_SIMULATIONS = 50       # Number of full adaptive tests to run.
-N_TRIALS_PER_TEST = 150  # Total trials simulated for each adaptive test.
+N_TRIALS_PER_TEST = 200  # Total trials simulated for each adaptive test.
 SIM_EARS = ['left', 'right']
 # Use consonant list directly from the estimator module for consistency.
 SIM_CONSONANTS = list(bayesian_vcv_estimator.CONSONANT_LABELS.keys())
@@ -61,24 +61,36 @@ def simulate_response(snr: float, true_srt: float) -> bool:
   return random.random() < p_correct
 
 def schedule_next_trial_sim(
-    estimators: Dict[Tuple[str, str], bayesian_vcv_estimator.ZestEstimator]
+    estimators: Dict[Tuple[str, str], bayesian_vcv_estimator.ZestEstimator],
+    sd_threshold: float = bayesian_vcv_estimator.SD_CONVERGENCE_THRESHOLD,
+    min_samples: int = bayesian_vcv_estimator.MIN_SAMPLES_PER_CONSONANT,
 ):
   """
   Replicates the scheduler from `demo_vcv.py` for simulation purposes.
   Uses Weighted Random Sampling based on uncertainty^2.
+  Excludes consonants with SD <= 3.0 and at least min_samples (6) collected.
   """
-  candidates = []
-  weights = []
+  unconverged_candidates = []
+  unconverged_weights = []
+  all_candidates = []
+  all_weights = []
 
   for key, estimator in estimators.items():
     _, uncertainty = estimator.get_estimate()
 
     weight = uncertainty ** 2
-    candidates.append(key)
-    weights.append(weight)
+    all_candidates.append(key)
+    all_weights.append(weight)
 
-  if candidates:
-    selected_key = random.choices(candidates, weights=weights, k=1)[0]
+    sample_count = len(estimator.history)
+    if uncertainty > sd_threshold or sample_count < min_samples:
+      unconverged_candidates.append(key)
+      unconverged_weights.append(weight)
+
+  if unconverged_candidates:
+    selected_key = random.choices(unconverged_candidates, weights=unconverged_weights, k=1)[0]
+  elif all_candidates:
+    selected_key = random.choices(all_candidates, weights=all_weights, k=1)[0]
   else:
     # Fallback if estimates dict is empty (shouldn't happen)
     return random.choice(list(estimators.keys())), 0.0
@@ -86,9 +98,14 @@ def schedule_next_trial_sim(
   selected_estimator = estimators[selected_key]
   next_snr = selected_estimator.get_next_snr()
 
+  consonant = selected_key[1]
+  min_snr = bayesian_vcv_estimator.CONSONANT_SNR_FLOOR_DB.get(
+      consonant, bayesian_vcv_estimator.MIN_SNR_DB
+  )
+
   return selected_key, np.clip(
       next_snr,
-      bayesian_vcv_estimator.MIN_SNR_DB,
+      min_snr,
       bayesian_vcv_estimator.MAX_SNR_DB
   )
 

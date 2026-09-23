@@ -115,3 +115,32 @@ def test_get_estimate_uncertainty_shrinks():
 
   _, new_sd = estimator.get_estimate()
   assert new_sd < initial_sd
+
+
+def test_estimator_trial_counts():
+  """Tests num_trials property and get_num_trials method on ZestEstimator."""
+  estimator = ZestEstimator(prior_mean=10.0)
+  assert estimator.num_trials == 0
+  assert estimator.get_num_trials() == 0
+
+  estimator.update(snr=10.0, is_correct=True)
+  assert estimator.num_trials == 1
+  assert estimator.get_num_trials() == 1
+
+
+def test_bayesian_are_all_consonants_converged_requires_min_samples():
+  """Tests are_all_consonants_converged requires min_samples (6) even if SD <= 3.0."""
+  from bayesian_vcv_estimator import are_all_consonants_converged, get_estimator_sample_count
+  from unittest.mock import MagicMock
+
+  est1 = MagicMock()
+  est1.get_estimate.return_value = (0.0, 2.5)  # SD <= 3.0
+  est1.history = [0.0] * 5  # Only 5 samples
+
+  assert get_estimator_sample_count(est1) == 5
+  assert not are_all_consonants_converged({('both', 'B'): est1})
+
+  # Once 6th sample is collected
+  est1.history = [0.0] * 6
+  assert get_estimator_sample_count(est1) == 6
+  assert are_all_consonants_converged({('both', 'B'): est1})
