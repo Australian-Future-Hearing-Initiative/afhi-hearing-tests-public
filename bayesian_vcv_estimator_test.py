@@ -1,8 +1,14 @@
 """Unit tests for bayesian_vcv_estimator.py."""
 
+from unittest.mock import MagicMock
+
 import numpy as np
 
-from bayesian_vcv_estimator import ZestEstimator
+from bayesian_vcv_estimator import (
+    ZestEstimator,
+    are_all_consonants_converged,
+    get_estimator_sample_count,
+)
 
 
 def test_initialization():
@@ -129,10 +135,7 @@ def test_estimator_trial_counts():
 
 
 def test_bayesian_are_all_consonants_converged_requires_min_samples():
-  """Tests are_all_consonants_converged requires min_samples (6) even if SD <= 3.0."""
-  from bayesian_vcv_estimator import are_all_consonants_converged, get_estimator_sample_count
-  from unittest.mock import MagicMock
-
+  """Tests that convergence still requires the minimum sample count."""
   est1 = MagicMock()
   est1.get_estimate.return_value = (0.0, 2.5)  # SD <= 3.0
   est1.history = [0.0] * 5  # Only 5 samples
