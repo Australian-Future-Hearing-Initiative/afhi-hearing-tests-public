@@ -125,7 +125,7 @@ CONSONANT_CLASSES = {
     'C2': {
         'members': ['Z', 'T', 'S', 'SH', 'ZH'],
         'floor_db': -22.0,
-        'initial_snr_db': -2.0,
+        'initial_snr_db': 0.0,
     },
     'C3': {
         'members': ['N', 'D', 'K', 'G', 'P'],
@@ -151,6 +151,9 @@ for _cls, _cfg in CONSONANT_CLASSES.items():
   for _c in _cfg['members']:
     CONSONANT_SNR_FLOOR_DB[_c] = _cfg['floor_db']
     CONSONANT_INITIAL_SNR_DB[_c] = _cfg['initial_snr_db']
+
+# Specific override: 'B' initial SNR set to 12.0 dB.
+CONSONANT_INITIAL_SNR_DB['B'] = 12.0
 
 # Sanity check: every consonant in CONSONANT_LABELS must
 # belong to a class, and every class member must exist in

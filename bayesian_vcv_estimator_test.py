@@ -1,7 +1,12 @@
 """Unit tests for bayesian_vcv_estimator.py."""
 
+import unittest.mock
+
 import numpy as np
 
+from bayesian_vcv_estimator import are_all_consonants_converged
+from bayesian_vcv_estimator import CONSONANT_INITIAL_SNR_DB
+from bayesian_vcv_estimator import get_estimator_sample_count
 from bayesian_vcv_estimator import ZestEstimator
 
 
@@ -129,11 +134,8 @@ def test_estimator_trial_counts():
 
 
 def test_bayesian_are_all_consonants_converged_requires_min_samples():
-  """Tests are_all_consonants_converged requires min_samples (6) even if SD <= 3.0."""
-  from bayesian_vcv_estimator import are_all_consonants_converged, get_estimator_sample_count
-  from unittest.mock import MagicMock
-
-  est1 = MagicMock()
+  """Tests are_all_consonants_converged requires min_samples (6)."""
+  est1 = unittest.mock.MagicMock()
   est1.get_estimate.return_value = (0.0, 2.5)  # SD <= 3.0
   est1.history = [0.0] * 5  # Only 5 samples
 
@@ -144,3 +146,9 @@ def test_bayesian_are_all_consonants_converged_requires_min_samples():
   est1.history = [0.0] * 6
   assert get_estimator_sample_count(est1) == 6
   assert are_all_consonants_converged({('both', 'B'): est1})
+
+
+def test_consonant_initial_snr_b_override():
+  """Tests that initial_snr_db for 'B' is 12.0 (other C1 members are 8.0)."""
+  assert CONSONANT_INITIAL_SNR_DB['B'] == 12.0
+  assert CONSONANT_INITIAL_SNR_DB['V'] == 8.0
