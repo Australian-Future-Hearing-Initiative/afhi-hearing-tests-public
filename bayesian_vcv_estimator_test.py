@@ -148,7 +148,9 @@ def test_bayesian_are_all_consonants_converged_requires_min_samples():
   assert are_all_consonants_converged({('both', 'B'): est1})
 
 
-def test_consonant_initial_snr_b_override():
-  """Tests that initial_snr_db for 'B' is 12.0 (other C1 members are 8.0)."""
+def test_consonant_initial_snr_overrides():
+  """Tests initial_snr_db overrides for 'B' (12.0) and 'D' (8.0)."""
   assert CONSONANT_INITIAL_SNR_DB['B'] == 12.0
   assert CONSONANT_INITIAL_SNR_DB['V'] == 8.0
+  assert CONSONANT_INITIAL_SNR_DB['D'] == 8.0
+  assert CONSONANT_INITIAL_SNR_DB['N'] == 5.0
