@@ -255,7 +255,7 @@ class TestScheduleNextTrial:
   def test_consonants_with_sd_at_or_below_threshold_excluded(
       self, mock_estimators
   ):
-    """Consonants with SD <= 3.0 are excluded when unconverged consonants exist."""
+    """Consonants at or below the SD threshold are excluded."""
     # Set 'B' (SD=5.0) and 'D' (SD=4.0) as unconverged (> 3.0).
     mock_estimators[('both', 'B')].get_estimate.return_value = (0.0, 5.0)
     mock_estimators[('both', 'D')].get_estimate.return_value = (0.0, 4.0)
@@ -283,7 +283,10 @@ class TestScheduleNextTrial:
       if key not in (('both', 'B'), ('both', 'D')):
         est.get_estimate.return_value = (0.0, 2.0)
 
-    selected = {demo_vcv.schedule_next_trial(mock_estimators)[0][1] for _ in range(50)}
+    selected = {
+        demo_vcv.schedule_next_trial(mock_estimators)[0][1]
+        for _ in range(50)
+    }
     assert selected == {'D'}
 
   def test_fallback_when_all_consonants_converged(self, mock_estimators):
@@ -295,10 +298,10 @@ class TestScheduleNextTrial:
     assert key in mock_estimators
     assert isinstance(snr, float)
 
-  def test_consonants_with_fewer_than_6_samples_not_excluded_even_if_sd_converged(
+  def test_low_sample_count_kept_when_sd_converged(
       self, mock_estimators
   ):
-    """Consonants with SD <= 3.0 are NOT excluded if they have fewer than 6 samples."""
+    """A low sample count keeps a consonant in the pool."""
     # Set 'B' to SD=2.0 (<= 3.0) but with only 3 samples (< 6).
     mock_estimators[('both', 'B')].get_estimate.return_value = (0.0, 2.0)
     mock_estimators[('both', 'B')].history = [0.0] * 3
@@ -318,7 +321,7 @@ class TestScheduleNextTrial:
       key, _ = demo_vcv.schedule_next_trial(mock_estimators)
       selected_consonants.add(key[1])
 
-    # Both B (insufficient samples) and D (unconverged SD) should be in candidate pool.
+    # B (too few samples) and D (SD still high) stay in the pool.
     assert selected_consonants.issubset({'B', 'D'})
     assert 'B' in selected_consonants
 
@@ -640,7 +643,9 @@ class TestSeparateEarTesting:
 
     demo_vcv.prepare_next_trial()
 
-    mock_schedule.assert_called_once_with(state.vcv_estimators, target_ear='left')
+    mock_schedule.assert_called_once_with(
+        state.vcv_estimators, target_ear='left'
+    )
     assert state.vcv_pending_audio['ear'] == 'left'
     assert state.vcv_pending_audio['consonant'] == 'B'
 
@@ -648,9 +653,9 @@ class TestSeparateEarTesting:
   @patch('demo_vcv._rename_saved_wav')
   @patch('demo_vcv.st')
   def test_adaptive_ear_switch_from_left_to_right(
-      self, mock_st, mock_rename, mock_prepare
+      self, mock_st, unused_rename, mock_prepare
   ):
-    """When left ear reaches n_total_trials // 2, test transitions to right ear."""
+    """Reaching the left-ear quota moves the test to the right ear."""
     estimator = MagicMock()
     state = _SessionState({
         'last_played_audio': 'VCV_aba_1_60SNR.wav',
@@ -682,7 +687,7 @@ class TestSeparateEarTesting:
   @patch('demo_vcv._rename_saved_wav')
   @patch('demo_vcv.st')
   def test_adaptive_completes_after_both_ears_finish(
-      self, mock_st, mock_rename, mock_complete
+      self, mock_st, unused_rename, mock_complete
   ):
     """When right ear completes its quota, complete_test is invoked."""
     estimator = MagicMock()
@@ -698,7 +703,8 @@ class TestSeparateEarTesting:
         'vcv_n_total_trials': 10,
         'vcv_merge_lr': False,
         'vcv_current_ear': 'right',
-        'vcv_completed_stimuli_current_ear': 4,  # 4 completed out of 5 for right ear
+        # 4 of 5 trials done on the right ear.
+        'vcv_completed_stimuli_current_ear': 4,
         'vcv_ear_switched_notice': False,
         'vcv_estimators': {('right', 'B'): estimator},
     })
@@ -712,15 +718,16 @@ class TestSeparateEarTesting:
 
 
 class TestConvergenceStoppingCondition:
-  """Tests verifying that data collection stops and results are displayed when all consonants converge."""
+  """Tests that collection stops once every consonant has converged."""
 
   def test_are_all_consonants_converged_logic(self):
-    """Tests are_all_consonants_converged under various uncertainty and sample count values."""
+    """Tests convergence across SD and sample-count cases."""
     mock_b = MagicMock()
     mock_b.get_estimate.return_value = (0.0, 2.5)  # converged SD
     mock_b.history = [0.0] * 6
     mock_d = MagicMock()
-    mock_d.get_estimate.return_value = (0.0, 3.0)  # exactly threshold -> converged SD
+    # An SD exactly at the threshold counts as converged.
+    mock_d.get_estimate.return_value = (0.0, 3.0)
     mock_d.history = [0.0] * 6
     mock_g = MagicMock()
     mock_g.get_estimate.return_value = (0.0, 3.2)  # > 3.0 -> unconverged SD
@@ -751,9 +758,9 @@ class TestConvergenceStoppingCondition:
   @patch('demo_vcv._rename_saved_wav')
   @patch('demo_vcv.st')
   def test_adaptive_stops_when_all_consonants_converge_in_merged_mode(
-      self, mock_st, mock_rename, mock_complete
+      self, mock_st, unused_rename, mock_complete
   ):
-    """In merged mode, as soon as all consonants reach SD <= 3 dB with >=6 samples, complete_test is called."""
+    """Merged mode finishes once every consonant has converged."""
     mock_b = MagicMock()
     mock_b.get_estimate.return_value = (0.0, 2.8)
     mock_b.history = [0.0] * 6
@@ -793,7 +800,7 @@ class TestConvergenceStoppingCondition:
   @patch('demo_vcv._rename_saved_wav')
   @patch('demo_vcv.st')
   def test_adaptive_switches_to_right_ear_when_left_ear_converges_early(
-      self, mock_st, mock_rename, mock_prepare
+      self, mock_st, unused_rename, mock_prepare
   ):
     """When left ear converges early, test switches to right ear to test it."""
     mock_b_left = MagicMock()
@@ -837,10 +844,10 @@ class TestConvergenceStoppingCondition:
   @patch('demo_vcv.complete_test')
   @patch('demo_vcv._rename_saved_wav')
   @patch('demo_vcv.st')
-  def test_adaptive_completes_when_right_ear_converges_and_left_already_converged(
-      self, mock_st, mock_rename, mock_complete
+  def test_adaptive_completes_when_both_ears_converged(
+      self, mock_st, unused_rename, mock_complete
   ):
-    """When right ear also converges, all consonants have converged and test stops."""
+    """The test stops once the right ear has converged too."""
     mock_b_left = MagicMock()
     mock_b_left.get_estimate.return_value = (0.0, 2.5)  # Left converged
     mock_b_left.history = [0.0] * 6
@@ -879,8 +886,10 @@ class TestConvergenceStoppingCondition:
 
   @patch('demo_vcv.complete_test')
   @patch('demo_vcv.st')
-  def test_prepare_next_trial_stops_if_all_converged(self, mock_st, mock_complete):
-    """prepare_next_trial invokes complete_test immediately if target ear has converged."""
+  def test_prepare_next_trial_stops_if_all_converged(
+      self, mock_st, mock_complete
+  ):
+    """prepare_next_trial stops when the target ear has converged."""
     mock_b = MagicMock()
     mock_b.get_estimate.return_value = (0.0, 2.5)
     mock_b.history = [0.0] * 6

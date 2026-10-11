@@ -88,7 +88,9 @@ def schedule_next_trial_sim(
       unconverged_weights.append(weight)
 
   if unconverged_candidates:
-    selected_key = random.choices(unconverged_candidates, weights=unconverged_weights, k=1)[0]
+    selected_key = random.choices(
+        unconverged_candidates, weights=unconverged_weights, k=1
+    )[0]
   elif all_candidates:
     selected_key = random.choices(all_candidates, weights=all_weights, k=1)[0]
   else:
