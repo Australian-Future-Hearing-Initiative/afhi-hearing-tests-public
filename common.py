@@ -356,6 +356,7 @@ def get_macos_system_volume():
       str: The volume percentage as a string (e.g., '75') if successful,
            otherwise returns the string 'unknown'.
   """
+  # pylint: disable=broad-exception-caught
   unknown_volume = 'unknown'
   try:
     command = ['osascript', '-e', 'output volume of (get volume settings)']
@@ -374,7 +375,6 @@ def get_macos_system_volume():
       return str(volume_clamped)
     else:
       return unknown_volume  # Command ran, but no output.
-  # pylint: disable=broad-exception-caught
   except (FileNotFoundError, subprocess.CalledProcessError,
           subprocess.TimeoutExpired, ValueError, Exception):
     # Any errors, just return 'unknown'.
