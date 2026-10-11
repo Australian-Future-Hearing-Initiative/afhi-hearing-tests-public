@@ -5,6 +5,7 @@ from unittest.mock import MagicMock
 import numpy as np
 
 from bayesian_vcv_estimator import (
+    CONSONANT_INITIAL_SNR_DB,
     ZestEstimator,
     are_all_consonants_converged,
     get_estimator_sample_count,
@@ -147,3 +148,11 @@ def test_bayesian_are_all_consonants_converged_requires_min_samples():
   est1.history = [0.0] * 6
   assert get_estimator_sample_count(est1) == 6
   assert are_all_consonants_converged({('both', 'B'): est1})
+
+
+def test_consonant_initial_snr_overrides():
+  """Tests initial_snr_db overrides for 'B' (12.0) and 'D' (8.0)."""
+  assert CONSONANT_INITIAL_SNR_DB['B'] == 12.0
+  assert CONSONANT_INITIAL_SNR_DB['V'] == 8.0
+  assert CONSONANT_INITIAL_SNR_DB['D'] == 8.0
+  assert CONSONANT_INITIAL_SNR_DB['N'] == 5.0

@@ -24,7 +24,7 @@ THRESHOLD_GRID = np.arange(MIN_SNR_DB, MAX_SNR_DB + STEP_SNR_DB, STEP_SNR_DB)
 # Default Prior settings.
 # Reduce initial prior to reduce step size as Starting SNR is now set
 # quite low to decrease overall search window.
-PRIOR_SD = 15.0
+PRIOR_SD = 12.0
 # Standard SD convergence threshold for trial scheduling.
 # Consonants with SD <= SD_CONVERGENCE_THRESHOLD and at least
 # MIN_SAMPLES_PER_CONSONANT samples are considered converged and excluded
@@ -125,7 +125,7 @@ CONSONANT_CLASSES = {
     'C2': {
         'members': ['Z', 'T', 'S', 'SH', 'ZH'],
         'floor_db': -22.0,
-        'initial_snr_db': -2.0,
+        'initial_snr_db': 0.0,
     },
     'C3': {
         'members': ['N', 'D', 'K', 'G', 'P'],
@@ -151,6 +151,11 @@ for _cls, _cfg in CONSONANT_CLASSES.items():
   for _c in _cfg['members']:
     CONSONANT_SNR_FLOOR_DB[_c] = _cfg['floor_db']
     CONSONANT_INITIAL_SNR_DB[_c] = _cfg['initial_snr_db']
+
+# Specific override: 'B' & 'D' initial SNR bases on analysis of SC data.
+CONSONANT_INITIAL_SNR_DB['B'] = 12.0
+CONSONANT_INITIAL_SNR_DB['D'] = 8.0
+
 
 # Sanity check: every consonant in CONSONANT_LABELS must
 # belong to a class, and every class member must exist in
