@@ -119,7 +119,7 @@ CONSONANT_LABELS = {
 CONSONANT_CLASSES = {
     'C1': {
         'members': ['B', 'V', 'M', 'TH', 'DH', 'F'],
-        'floor_db': -10.0,
+        'floor_db': -15.0,
         'initial_snr_db': 8.0,
     },
     'C2': {
