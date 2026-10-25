@@ -284,3 +284,21 @@ def test_play_scaled_vcv_wav_leaves_no_temp_files(audio_page):
   mock_html.assert_called_once()
   np.testing.assert_array_equal(_played_samples(mock_html), data)
   assert not list(tmp_path.glob('*.wav'))
+
+
+def test_play_scaled_vcv_wav_reports_success(audio_page):
+  '''It returns True once the audio is on the page.'''
+  _, tmp_path = audio_page
+  source = tmp_path / 'aba.wav'
+  _wavfile.write(source, 44100, np.zeros(100, dtype=np.int16))
+  assert common.play_scaled_vcv_wav(str(source), 60.0, 60.0) is True
+
+
+def test_play_scaled_vcv_wav_reports_failure(audio_page):
+  '''A file that can't be loaded plays nothing and returns False.'''
+  mock_html, tmp_path = audio_page
+  with patch('common.st.error'):
+    played = common.play_scaled_vcv_wav(str(tmp_path / 'missing.wav'),
+                                        60.0, 60.0)
+  assert played is False
+  mock_html.assert_not_called()
