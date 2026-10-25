@@ -3,9 +3,7 @@
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-import scipy.io.wavfile as wavfile
 import streamlit as st
-import tempfile
 import time
 from datetime import datetime
 
@@ -143,13 +141,7 @@ def play_tone(
   extra_delay_s = 0.8
   with st.session_state.spinner_placeholder, \
        st.spinner('Playing ...'):
-    # Save the tone to a temporary WAV file.
-    with tempfile.NamedTemporaryFile(
-        suffix='.wav', delete=False
-    ) as temp_file:
-      wavfile.write(temp_file.name, FS_HZ, tone)
-      # Play the temporary file.
-      common.autoplay_audio(temp_file.name)
+    common.autoplay_wav(tone, FS_HZ)
     # Pause for audio to play. This is necessary to
     # avoid audio glitches. The extra delay beyond the
     # tone duration seems especially critical for

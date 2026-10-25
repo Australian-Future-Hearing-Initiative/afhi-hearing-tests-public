@@ -27,35 +27,30 @@ class TestCalibration(unittest.TestCase):
     with self.assertRaises(ValueError):
       calibration.play_calibration_tone(1000, -0.1)
 
-  @patch('calibration.common.autoplay_audio')
-  @patch('calibration.wavfile.write')
-  def test_play_calibration_tone_uses_correct_sampling_rate(self,
-                                                            mock_write, _):
+  @patch('calibration.common.autoplay_wav')
+  def test_play_calibration_tone_uses_correct_sampling_rate(self, mock_play):
     """Test that play_calibration_tone uses the correct sampling rate."""
     calibration.play_calibration_tone(1000, 0.5, 0.1)
-    _, fs, _ = mock_write.call_args[0]
+    _, fs = mock_play.call_args[0]
     self.assertEqual(fs, calibration.FS_HZ)
 
-  @patch('calibration.common.autoplay_audio')
-  @patch('calibration.wavfile.write')
+  @patch('calibration.common.autoplay_wav')
   def test_play_calibration_tone_generates_correct_data_format(self,
-                                                               mock_write, _):
+                                                               mock_play):
     """Test that play_calibration_tone generates data with correct format."""
     duration = 0.1
     calibration.play_calibration_tone(1000, 0.5, duration)
-    _, _, data = mock_write.call_args[0]
+    data, _ = mock_play.call_args[0]
     self.assertIsInstance(data, np.ndarray)
     self.assertEqual(data.dtype, np.int16)
     self.assertEqual(len(data), int(calibration.FS_HZ * duration))
 
-  @patch('calibration.common.autoplay_audio')
-  @patch('calibration.wavfile.write')
-  def test_play_calibration_tone_scales_amplitude_correctly(self,
-                                                            mock_write, _):
+  @patch('calibration.common.autoplay_wav')
+  def test_play_calibration_tone_scales_amplitude_correctly(self, mock_play):
     """Test that play_calibration_tone scales the amplitude correctly."""
     volume = 0.5
     calibration.play_calibration_tone(1000, volume, 0.1)
-    _, _, data = mock_write.call_args[0]
+    data, _ = mock_play.call_args[0]
     max_amplitude = np.max(np.abs(data))
     expected_max = volume * common.MAX_16_BIT_INT
     np.testing.assert_allclose(max_amplitude, expected_max, rtol=0.01)

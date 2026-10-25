@@ -2,9 +2,7 @@
 
 import numpy as np
 import streamlit as st
-import tempfile
 import time
-from scipy.io import wavfile
 
 import common
 
@@ -62,10 +60,7 @@ def play_calibration_tone(frequency_hz, volume, duration_s=0.5):
   tone = tone * volume  # Adjust the volume.
   # Convert to 16-bit integer format.
   tone = (tone * common.MAX_16_BIT_INT).astype(np.int16)
-  # Save the tone to a temporary WAV file.
-  with tempfile.NamedTemporaryFile(suffix='.wav', delete=False) as temp_file:
-    wavfile.write(temp_file.name, FS_HZ, tone)
-    common.autoplay_audio(temp_file.name)  # Play the temporary file.
+  common.autoplay_wav(tone, FS_HZ)
   time.sleep(duration_s)  # Wait for audio to play.
 
 def calibrate_audio():

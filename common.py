@@ -113,15 +113,33 @@ def autoplay_audio(file_path: str):
   else:
     raise ValueError('Only WAV and MP3 files are supported.')
   with open(file_path, 'rb') as f:
-    data = f.read()
-    b64 = base64.b64encode(data).decode()
-    html = f"""
-            <audio autoplay="true">
-            <source src="data:audio/wav;base64,{b64}" type="audio/{audio_type}">
-            </audio>
-            """
-    with st.session_state.audio_container:
-      st.components.v1.html(html, height=0)
+    _autoplay_bytes(f.read(), audio_type)
+
+def autoplay_wav(data: np.ndarray, sample_rate: int):
+  """Plays audio samples without writing a file or showing a player.
+
+  The samples are encoded as a WAV in memory and embedded in the page, so
+  nothing is left behind in the temp directory.
+
+  Args:
+    data: Samples in any dtype scipy.io.wavfile.write accepts, mono or
+      (n_samples, n_channels).
+    sample_rate: Sample rate in Hz.
+  """
+  buffer = io.BytesIO()
+  wavfile.write(buffer, sample_rate, data)
+  _autoplay_bytes(buffer.getvalue(), 'wav')
+
+def _autoplay_bytes(data: bytes, audio_type: str):
+  """Embeds encoded audio in the page as an autoplaying data URI."""
+  b64 = base64.b64encode(data).decode()
+  html = f"""
+          <audio autoplay="true">
+          <source src="data:audio/wav;base64,{b64}" type="audio/{audio_type}">
+          </audio>
+          """
+  with st.session_state.audio_container:
+    st.components.v1.html(html, height=0)
 
 def generate_zip_bytes(files: list[tuple[str, any]]) -> bytes:
   """Generates the bytes content of a zip file in memory.
@@ -544,11 +562,8 @@ def play_scaled_vcv_wav(file_path: str,
   try:
     scaled_data, fs = get_scaled_vcv_data(file_path, target_db_spl, ref_db_spl)
 
-    with tempfile.NamedTemporaryFile(suffix='.wav', delete=False) as tmpf:
-      wavfile.write(tmpf.name, fs, scaled_data)
-      temp_file_path = tmpf.name
-    print(f'  Playing scaled temp file: {os.path.basename(temp_file_path)}')
-    autoplay_audio(temp_file_path)
+    print(f'  Playing scaled {os.path.basename(file_path)}')
+    autoplay_wav(scaled_data, fs)
 
   except (ValueError, TypeError, FileNotFoundError):
     # Errors are already logged by get_scaled_vcv_data, so just pass.

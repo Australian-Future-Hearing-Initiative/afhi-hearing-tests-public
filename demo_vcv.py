@@ -6,7 +6,6 @@ import math
 import os
 import random
 import shutil
-import tempfile
 import time
 import zipfile
 
@@ -1044,25 +1043,23 @@ def _process_and_play_vcv(clean_file_path: str, snr_db: float, ear: str):
   silence = np.zeros((int(sample_rate * 0.1), 2), dtype=mixed_audio.dtype)
   final_audio = np.concatenate([silence, mixed_audio], axis=0)
 
-  with tempfile.NamedTemporaryFile(suffix='.wav', delete=False) as tmpf:
-    wavfile.write(tmpf.name, sample_rate, final_audio)
-    common.autoplay_audio(tmpf.name)
-    st.session_state.last_played_audio = clean_file_path
-    st.session_state.vcv_last_snr = snr_db
-    st.session_state.vcv_tone_start_time = time.time()
+  common.autoplay_wav(final_audio, sample_rate)
+  st.session_state.last_played_audio = clean_file_path
+  st.session_state.vcv_last_snr = snr_db
+  st.session_state.vcv_tone_start_time = time.time()
 
-    # Save a copy of the played audio for NAL study mode.
-    wav_dir = st.session_state.vcv_wav_save_dir
-    if wav_dir and not is_practice:
-      snr_str = f'{snr_db:+.1f}'.replace('+', 'p').replace('-', 'n')
-      save_name = (
-          f'trial_{trial_num:03d}_target_{consonant}'
-          f'_response_PENDING_snr_{snr_str}dB_{ear}.wav'
-      )
-      save_path = os.path.join(wav_dir, save_name)
-      shutil.copy2(tmpf.name, save_path)
-      st.session_state.vcv_last_saved_wav_path = save_path
-      print(f'  Saved trial WAV: {save_name}')
+  # Save a copy of the played audio for NAL study mode.
+  wav_dir = st.session_state.vcv_wav_save_dir
+  if wav_dir and not is_practice:
+    snr_str = f'{snr_db:+.1f}'.replace('+', 'p').replace('-', 'n')
+    save_name = (
+        f'trial_{trial_num:03d}_target_{consonant}'
+        f'_response_PENDING_snr_{snr_str}dB_{ear}.wav'
+    )
+    save_path = os.path.join(wav_dir, save_name)
+    wavfile.write(save_path, sample_rate, final_audio)
+    st.session_state.vcv_last_saved_wav_path = save_path
+    print(f'  Saved trial WAV: {save_name}')
 
 
 def _is_nal_mode():

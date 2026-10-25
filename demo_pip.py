@@ -6,8 +6,6 @@ import pandas as pd
 from datetime import datetime
 
 import streamlit as st
-import tempfile
-import scipy.io.wavfile as wavfile
 import matplotlib.pyplot as plt
 
 import audio_tools
@@ -115,10 +113,7 @@ def play_pulsed_tone(frequency_hz: float,
     tone[:, 1] = 0  # Mute right ear.
   elif ear == 'right':
     tone[:, 0] = 0  # Mute left ear.
-  # Save the tone to a temporary WAV file.
-  with tempfile.NamedTemporaryFile(suffix='.wav') as temp_file:
-    wavfile.write(temp_file.name, FS_HZ, tone)
-    common.autoplay_audio(temp_file.name)  # Play the temporary file.
+  common.autoplay_wav(tone, FS_HZ)
 
 def demo_button():
   """Displays the demo button and supporting info."""
