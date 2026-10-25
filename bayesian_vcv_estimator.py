@@ -152,8 +152,10 @@ for _cls, _cfg in CONSONANT_CLASSES.items():
     CONSONANT_SNR_FLOOR_DB[_c] = _cfg['floor_db']
     CONSONANT_INITIAL_SNR_DB[_c] = _cfg['initial_snr_db']
 
-# Specific override: 'B' & 'D' initial SNR based on analysis of SC data.
+# Specific override: 'B', 'V' & 'D' initial SNR based on analysis of SC and
+# early VCV4 test data.
 CONSONANT_INITIAL_SNR_DB['B'] = 12.0
+CONSONANT_INITIAL_SNR_DB['V'] = 12.0
 CONSONANT_INITIAL_SNR_DB['D'] = 8.0
 
 
