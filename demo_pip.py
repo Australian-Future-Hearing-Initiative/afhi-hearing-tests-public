@@ -98,14 +98,7 @@ def play_pulsed_tone(frequency_hz: float,
     noise_amplitude = calibration.dbspl_to_amp(dither_db_spl)
   noise = np.random.randn(len(tone))
   tone = tone + noise_amplitude * noise
-  if datatype == 'float32':
-    tone = tone.astype(np.float32)
-  elif datatype == 'int32':
-    tone = (tone * common.MAX_32_BIT_INT).astype(np.int32)
-  elif datatype == 'int16':
-    tone = (tone * common.MAX_16_BIT_INT).astype(np.int16)
-  else:
-    raise ValueError('Invalid datatype. Must be float32, int32, or int16.')
+  tone = common.to_pcm(tone, datatype)
   # Create a 2-channel stereo array.
   tone = np.repeat(tone[:, np.newaxis], 2, axis=1)
   # Zero out one channel if only one ear is selected.
