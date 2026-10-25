@@ -535,7 +535,7 @@ def handle_response_button_click(button_label):
   correct_answer = get_correct_answer(st.session_state.last_played_audio)
 
   if st.session_state.vcv_tone_start_time is not None:
-    response_time_s = time.time() - st.session_state.vcv_tone_start_time
+    response_time_s = time.monotonic() - st.session_state.vcv_tone_start_time
     st.session_state.vcv_tone_start_time = None
   else:
     response_time_s = 0
@@ -1046,7 +1046,7 @@ def _process_and_play_vcv(clean_file_path: str, snr_db: float, ear: str):
   common.autoplay_wav(final_audio, sample_rate)
   st.session_state.last_played_audio = clean_file_path
   st.session_state.vcv_last_snr = snr_db
-  st.session_state.vcv_tone_start_time = time.time()
+  st.session_state.vcv_tone_start_time = time.monotonic()
 
   # Save a copy of the played audio for NAL study mode.
   wav_dir = st.session_state.vcv_wav_save_dir
