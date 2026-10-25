@@ -3,7 +3,6 @@
 import numpy as np
 import time
 import pandas as pd
-from datetime import datetime
 
 import streamlit as st
 import matplotlib.pyplot as plt
@@ -511,7 +510,7 @@ def create_main_demo():
       test_name = 'Pip PTA Test'
       # Display download button.
       zip_data = common.generate_zip_bytes(files_for_zip)
-      timestamp = datetime.now().strftime('%Y%m%d_%H%M')
+      timestamp = common.results_timestamp()
       zip_filename = f'UTC{timestamp}_{zip_prefix}.zip'
 
       # Save local backup if applicable; set flag to prevent multiple backups.

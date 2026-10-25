@@ -1,7 +1,6 @@
 """Functionality for the pure-tone audiometry (PTA) demo."""
 
 import time
-from datetime import datetime
 
 import numpy as np
 import pandas as pd
@@ -844,7 +843,7 @@ def create_main_demo():
 
       # Generate zip data and filename.
       zip_data = common.generate_zip_bytes(files_for_zip)
-      timestamp = datetime.now().strftime('%Y%m%d_%H%M')
+      timestamp = common.results_timestamp()
       zip_filename = f'UTC{timestamp}_{zip_prefix}.zip'
 
       # Save local backup if applicable; set flag to prevent multiple backups.

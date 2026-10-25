@@ -263,6 +263,13 @@ def send_results_email(
         # Non-critical error, just log it to console.
         print(f'Warning: Failed to close SMTP connection cleanly: {e}')
 
+def results_timestamp() -> str:
+  """Returns the timestamp used in results file names, to the second.
+
+  Seconds keep two saves in the same minute from sharing a name.
+  """
+  return datetime.now().strftime('%Y%m%d_%H%M%S')
+
 def display_email_results_form(
     test_name: str,
     files_for_zip: list[tuple[str, any]],
@@ -309,7 +316,7 @@ def display_email_results_form(
           return
 
         # Generate timestamped filename.
-        timestamp = datetime.now().strftime('%Y%m%d_%H%M')
+        timestamp = results_timestamp()
         attachment_filename = f'UTC{timestamp}_{zip_filename_prefix}.zip'
 
         # Construct subject.
