@@ -115,6 +115,32 @@ def autoplay_audio(file_path: str):
   with open(file_path, 'rb') as f:
     _autoplay_bytes(f.read(), audio_type)
 
+def to_pcm(tone: np.ndarray, datatype: str) -> np.ndarray:
+  """Converts a float signal to WAV samples, clipping to full scale first.
+
+  Clipping before the cast matters for the integer types: a value even
+  slightly past 1.0 would otherwise wrap round to a full-scale negative
+  sample, which is heard as a click.
+
+  Args:
+    tone: The signal, nominally in [-1, 1].
+    datatype: 'float32', 'int32' or 'int16'.
+
+  Returns:
+    The signal in that datatype.
+
+  Raises:
+    ValueError: If the datatype is not one of the three above.
+  """
+  tone = np.clip(tone, -1.0, 1.0)
+  if datatype == 'float32':
+    return tone.astype(np.float32)
+  if datatype == 'int32':
+    return (tone * MAX_32_BIT_INT).astype(np.int32)
+  if datatype == 'int16':
+    return (tone * MAX_16_BIT_INT).astype(np.int16)
+  raise ValueError('Invalid datatype. Must be float32, int32, or int16.')
+
 def autoplay_wav(data: np.ndarray, sample_rate: int):
   """Plays audio samples without writing a file or showing a player.
 
