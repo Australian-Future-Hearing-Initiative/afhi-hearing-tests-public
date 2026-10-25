@@ -157,12 +157,15 @@ def show_calibration():
     if st.button('Play/stop VCV noise', key='noise_button', type='primary'):
       if not st.session_state.tone_gen_vcv_noise_playing:
         if os.path.exists(VCV_NOISE_FILE_PATH):
-          common.play_scaled_vcv_wav(
-              VCV_NOISE_FILE_PATH,
-              target_db_spl=calibration.DEFAULT_VCV_DB_SPL,
-              ref_db_spl=calibration.REFERENCE_VCV_DB_SPL
+          # Stay in the "not playing" state if it failed, so the next
+          # press retries rather than playing silence.
+          st.session_state.tone_gen_vcv_noise_playing = (
+              common.play_scaled_vcv_wav(
+                  VCV_NOISE_FILE_PATH,
+                  target_db_spl=calibration.DEFAULT_VCV_DB_SPL,
+                  ref_db_spl=calibration.REFERENCE_VCV_DB_SPL
+              )
           )
-          st.session_state.tone_gen_vcv_noise_playing = True
         else:
           st.error(f'Noise file not found: {VCV_NOISE_FILE_PATH}')
           st.session_state.tone_gen_vcv_noise_playing = False
