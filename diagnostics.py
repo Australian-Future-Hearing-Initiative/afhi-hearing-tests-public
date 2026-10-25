@@ -402,7 +402,8 @@ def create_vcv_report(
     print(f"Generating report, saving to '{output_file}'...")
     for i, clean_path in enumerate(all_human_files):
       base_name = os.path.basename(clean_path)
-      found_label = next((l for l in consonant_labels if l in base_name), None)
+      found_label = next(
+          (label for label in consonant_labels if label in base_name), None)
 
       if not found_label:
         print(f"Skipping {base_name}, could not determine label.")

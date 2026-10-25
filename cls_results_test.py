@@ -37,7 +37,7 @@ def test_generate_cls_results_csv_row_count():
   df = _make_df(n_rows=3)
   with patch(_VOLUME_PATCH, return_value=_MOCK_VOLUME):
     csv = cls_results.generate_cls_results_csv(df, duration_s=60)
-  data_lines = [l for l in csv.splitlines() if not l.startswith('#')]
+  data_lines = [line for line in csv.splitlines() if not line.startswith('#')]
   # One header row + one row per df row.
   assert len(data_lines) == len(df) + 1
 

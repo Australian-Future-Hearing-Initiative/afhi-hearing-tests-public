@@ -53,7 +53,7 @@ def test_generate_pta_full_results_csv_row_count():
       _SAMPLE_TRIALS, pta_duration_s=60, pta_method='Hybrid'
   )
   # Strip comment lines.
-  data_lines = [l for l in csv.splitlines() if not l.startswith('#')]
+  data_lines = [line for line in csv.splitlines() if not line.startswith('#')]
   # One header row + one row per trial.
   assert len(data_lines) == len(_SAMPLE_TRIALS) + 1
 
@@ -79,7 +79,7 @@ def test_generate_audiogram_csv_headers():
 def test_generate_audiogram_csv_data_rows():
   '''Audiogram CSV contains one row per (frequency, threshold) pair.'''
   csv = pta_results.generate_audiogram_csv('Right', _SAMPLE_AUDIOGRAM)
-  data_lines = [l for l in csv.splitlines() if not l.startswith('#')]
+  data_lines = [line for line in csv.splitlines() if not line.startswith('#')]
   assert len(data_lines) == len(_SAMPLE_AUDIOGRAM)
   assert '1000,30' in csv
   assert '4000,50' in csv

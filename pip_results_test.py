@@ -29,7 +29,7 @@ def test_generate_pip_full_results_csv_row_count():
   csv = pip_results.generate_pip_full_results_csv(
       _SAMPLE_TRIALS, pip_duration_s=90
   )
-  data_lines = [l for l in csv.splitlines() if not l.startswith('#')]
+  data_lines = [line for line in csv.splitlines() if not line.startswith('#')]
   assert len(data_lines) == len(_SAMPLE_TRIALS) + 1
 
 
@@ -52,7 +52,7 @@ def test_generate_pip_audiogram_csv_headers():
 def test_generate_pip_audiogram_csv_data_rows():
   '''Audiogram CSV contains one row per (frequency, threshold) pair.'''
   csv = pip_results.generate_pip_audiogram_csv('Right', _SAMPLE_AUDIOGRAM)
-  data_lines = [l for l in csv.splitlines() if not l.startswith('#')]
+  data_lines = [line for line in csv.splitlines() if not line.startswith('#')]
   assert len(data_lines) == len(_SAMPLE_AUDIOGRAM)
   assert '1000,25' in csv
   assert '4000,45' in csv
