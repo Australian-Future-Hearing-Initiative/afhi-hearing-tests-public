@@ -5,7 +5,6 @@ import streamlit as st
 import time
 import os
 import tempfile
-from scipy.io import wavfile
 import zipfile
 import io
 
@@ -41,9 +40,7 @@ def _play_short_silence():
   silence = np.zeros(num_samples, dtype=np.int16)
   stereo_silence = np.repeat(silence[:, np.newaxis], 2, axis=1)
   try:
-    with tempfile.NamedTemporaryFile(suffix='.wav', delete=False) as tmpf:
-      wavfile.write(tmpf.name, demo_pta.FS_HZ, stereo_silence)
-      common.autoplay_audio(tmpf.name)
+    common.autoplay_wav(stereo_silence, demo_pta.FS_HZ)
   except Exception as e: # pylint: disable=broad-exception-caught
     st.error(f"Error playing silence: {e}")
     print(f"ERROR: Could not play silence file: {e}")

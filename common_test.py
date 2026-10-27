@@ -1,5 +1,6 @@
 """Unit tests for common.py."""
 
+import base64
 import io
 import os
 import tempfile
@@ -240,3 +241,46 @@ def test_get_scaled_vcv_data_file_not_found():
       common.get_scaled_vcv_data(
           '/nonexistent_file.wav', target_db_spl=65.0, ref_db_spl=65.0
       )
+
+
+# --- autoplay_wav: playback without temp files ---
+
+def _played_samples(mock_html):
+  '''Decodes the WAV embedded in the last autoplay HTML.'''
+  html = mock_html.call_args[0][0]
+  b64 = html.split('base64,')[1].split('"')[0]
+  _, data = _wavfile.read(io.BytesIO(base64.b64decode(b64)))
+  return data
+
+
+@pytest.fixture(name='audio_page')
+def fixture_audio_page(monkeypatch, tmp_path):
+  '''Mocks the page's audio container and gives tempfile an empty dir.'''
+  monkeypatch.setattr(st.session_state, 'audio_container', MagicMock(),
+                      raising=False)
+  monkeypatch.setattr(tempfile, 'tempdir', str(tmp_path))
+  with patch('common.st.components.v1.html') as mock_html:
+    yield mock_html, tmp_path
+
+
+def test_autoplay_wav_embeds_the_samples(audio_page):
+  '''The page gets a data URI that decodes to the same samples.'''
+  mock_html, _ = audio_page
+  tone = (np.sin(np.linspace(0, 20, 480)) * 10000).astype(np.int16)
+  stereo = np.repeat(tone[:, np.newaxis], 2, axis=1)
+  common.autoplay_wav(stereo, 48000)
+  np.testing.assert_array_equal(_played_samples(mock_html), stereo)
+
+
+def test_play_scaled_vcv_wav_leaves_no_temp_files(audio_page):
+  '''Playing a VCV stimulus writes nothing to the temp directory.'''
+  mock_html, tmp_path = audio_page
+  data = (np.sin(np.linspace(0, 20, 480)) * 10000).astype(np.int16)
+  source = tmp_path / 'source' / 'aba.wav'
+  source.parent.mkdir()
+  _wavfile.write(source, 44100, data)
+  common.play_scaled_vcv_wav(str(source), target_db_spl=60.0,
+                             ref_db_spl=60.0)
+  mock_html.assert_called_once()
+  np.testing.assert_array_equal(_played_samples(mock_html), data)
+  assert not list(tmp_path.glob('*.wav'))

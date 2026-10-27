@@ -1,7 +1,6 @@
 """Functionality for the pure-tone audiometry (PTA) demo."""
 
 import time
-import tempfile
 from datetime import datetime
 
 import numpy as np
@@ -152,11 +151,8 @@ def play_pulsed_tone(frequency_hz: float,
     wavfile.write(save_path, FS_HZ, tone)
     if play_audio:
       common.autoplay_audio(save_path)
-  else:
-    with tempfile.NamedTemporaryFile(suffix='.wav') as temp_file:
-      wavfile.write(temp_file.name, FS_HZ, tone)
-      if play_audio:
-        common.autoplay_audio(temp_file.name)  # Play the temporary file.
+  elif play_audio:
+    common.autoplay_wav(tone, FS_HZ)
 
 def demo_button():
   """Displays the demo button and supporting info."""
