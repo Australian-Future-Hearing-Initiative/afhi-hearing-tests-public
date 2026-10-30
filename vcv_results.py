@@ -5,7 +5,6 @@ import io
 import os
 import shutil
 import time
-from datetime import datetime
 
 import matplotlib.pyplot as plt
 from matplotlib.lines import Line2D
@@ -293,7 +292,7 @@ def display_results(
   test_name = 'Consonant Confusion Test'
   # Display download button.
   zip_data = common.generate_zip_bytes(files_for_zip)
-  timestamp = datetime.now().strftime('%Y%m%d_%H%M')
+  timestamp = common.results_timestamp()
   zip_filename = f'UTC{timestamp}_{zip_prefix}.zip'
 
   # Save local backup if applicable; set flag to prevent multiple backups.
@@ -458,7 +457,7 @@ def display_adaptive_results(
 
   # Display download button.
   zip_data = common.generate_zip_bytes(files_for_zip)
-  timestamp = datetime.now().strftime('%Y%m%d_%H%M')
+  timestamp = common.results_timestamp()
   zip_filename = f'UTC{timestamp}_{zip_prefix}.zip'
 
   # Save local backup if applicable; set flag to prevent multiple backups.
