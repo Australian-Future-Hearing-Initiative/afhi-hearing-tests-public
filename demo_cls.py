@@ -258,7 +258,7 @@ def response_button_click(button_number):
     st.rerun()
   # Calculate the response time.
   if st.session_state.cls_tone_start_time is not None:
-    response_time_s = time.time() - st.session_state.cls_tone_start_time
+    response_time_s = time.monotonic() - st.session_state.cls_tone_start_time
     st.session_state.cls_tone_start_time = None
   else:
     response_time_s = 0
@@ -505,7 +505,7 @@ def create_main_demo():
     if st.session_state.cls_stimulus_state == 'Playing':
       ear, frequency_hz, volume = (
           st.session_state.cls_stimuli[-1])
-      st.session_state.cls_tone_start_time = time.time()
+      st.session_state.cls_tone_start_time = time.monotonic()
       play_tone(ear, frequency_hz, volume, TONE_DURATION_S)
       st.session_state.cls_stimulus_state = 'Waiting'
       st.session_state.cls_response_pending = False

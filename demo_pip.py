@@ -167,7 +167,7 @@ def user_response(frequency_hz: float, ear: str, n_pips: int):
   actual_n_pips = st.session_state.pip_latest_n_pips
   # Calculate the response time
   if st.session_state.pip_tone_start_time is not None:
-    response_time_s = time.time() - st.session_state.pip_tone_start_time
+    response_time_s = time.monotonic() - st.session_state.pip_tone_start_time
     st.session_state.pip_tone_start_time = None  # Reset the start time
   else:
     response_time_s = 0
@@ -233,7 +233,7 @@ def pip_test_next_step(frequency_hz, ear):
   print(f'Amplitude: {amplitude}')
   print(f'Generated a {n_pips}-pip tone')
   with spinner_placeholder, st.spinner('Playing ...'):
-    st.session_state.pip_tone_start_time = time.time()
+    st.session_state.pip_tone_start_time = time.monotonic()
     play_pulsed_tone(frequency_hz, amplitude, ear, n_pulses=n_pips)
     time.sleep(SPINNER_DELAY_S)
 

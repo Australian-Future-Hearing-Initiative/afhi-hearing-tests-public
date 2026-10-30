@@ -289,7 +289,8 @@ def hughson_westlake_next_step(frequency_hz, ear):
                  icon=':material/hearing:'):
       # Calculate the response time.
       if st.session_state.pta_tone_start_time is not None:
-        response_time_s = time.time() - st.session_state.pta_tone_start_time
+        response_time_s = (time.monotonic()
+                           - st.session_state.pta_tone_start_time)
         st.session_state.pta_tone_start_time = None  # Reset the start time.
       else:
         response_time_s = 0
@@ -330,7 +331,7 @@ def hughson_westlake_next_step(frequency_hz, ear):
     if amplitude > 1:
       print('Warning: tone amplitude is greater than 1 - clipping.')
       amplitude = 1
-    st.session_state.pta_tone_start_time = time.time()
+    st.session_state.pta_tone_start_time = time.monotonic()
     play_pulsed_tone(frequency_hz, amplitude, ear)
     time.sleep(RESPONSE_WINDOW_S)  # Give the user time to respond.
     st.session_state.pta_results.append(
@@ -633,7 +634,8 @@ def adaptive_pta_next_step(ear):
                  icon=':material/hearing:'):
       # Calculate the response time.
       if st.session_state.pta_tone_start_time is not None:
-        response_time_s = time.time() - st.session_state.pta_tone_start_time
+        response_time_s = (time.monotonic()
+                           - st.session_state.pta_tone_start_time)
         st.session_state.pta_tone_start_time = None  # Reset the start time.
       else:
         response_time_s = 0
@@ -701,7 +703,7 @@ def adaptive_pta_next_step(ear):
     if amplitude > 1:
       print('Warning: tone amplitude is greater than 1 - clipping.')
       amplitude = 1
-    st.session_state.pta_tone_start_time = time.time()
+    st.session_state.pta_tone_start_time = time.monotonic()
     play_pulsed_tone(frequency_hz, amplitude, ear)
     time.sleep(RESPONSE_WINDOW_S)  # Give the user time to respond.
     # Results are appended ONLY after tone playback and response window finish.
