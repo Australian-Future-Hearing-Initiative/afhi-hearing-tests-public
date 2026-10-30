@@ -549,7 +549,7 @@ def get_scaled_vcv_data(
 
 
 def play_scaled_vcv_wav(file_path: str,
-                        target_db_spl: float, ref_db_spl: float):
+                        target_db_spl: float, ref_db_spl: float) -> bool:
   """Plays a WAV file after scaling it based on VCV calibration constants.
 
   This is a wrapper around get_scaled_vcv_data that handles playback.
@@ -558,13 +558,15 @@ def play_scaled_vcv_wav(file_path: str,
     file_path: Path to the WAV audio file.
     target_db_spl: The target sound pressure level in dB.
     ref_db_spl: The reference sound pressure level in dB.
+
+  Returns:
+    True if the audio was sent to the page, False if it couldn't be loaded.
+    get_scaled_vcv_data has already shown the error in that case.
   """
   try:
     scaled_data, fs = get_scaled_vcv_data(file_path, target_db_spl, ref_db_spl)
-
-    print(f'  Playing scaled {os.path.basename(file_path)}')
-    autoplay_wav(scaled_data, fs)
-
   except (ValueError, TypeError, FileNotFoundError):
-    # Errors are already logged by get_scaled_vcv_data, so just pass.
-    pass
+    return False
+  print(f'  Playing scaled {os.path.basename(file_path)}')
+  autoplay_wav(scaled_data, fs)
+  return True
