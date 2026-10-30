@@ -5,9 +5,11 @@ folder structure against the known VCV token set, checks WAV file constraints,
 and returns a mapping from consonant labels to file paths.
 """
 
+import enum
 import os
 import shutil
 import tempfile
+import typing
 import zipfile
 
 from scipy.io import wavfile
@@ -18,6 +20,23 @@ import bayesian_vcv_estimator
 
 MAX_WAV_FILES_PER_TOKEN = 10
 MAX_WAV_DURATION_S = 5.0
+
+
+class Level(enum.StrEnum):
+  """Level of a message from extract_and_validate_zip.
+
+  One per Streamlit alert: st.success, st.warning and st.error.
+  """
+  SUCCESS = 'success'
+  WARNING = 'warning'
+  ERROR = 'error'
+
+
+class Message(typing.NamedTuple):
+  """A message for the user from extract_and_validate_zip."""
+  level: Level
+  text: str
+
 
 # Comprehensive VCV-to-consonant-label lookup.
 # Keys are lowercase VCV tokens; values are the button labels.
@@ -38,7 +57,7 @@ SUPPORTED_LABELS = set(bayesian_vcv_estimator.CONSONANT_LABELS.keys())
 def extract_and_validate_zip(
     zip_bytes: bytes,
     dest_dir: str | None = None,
-) -> tuple[dict[str, list[str]], list[str]]:
+) -> tuple[dict[str, list[str]], list[Message]]:
   """Extracts a VCV ZIP file and validates its contents.
 
   Expected ZIP structure::
@@ -62,9 +81,9 @@ def extract_and_validate_zip(
     A tuple of:
       - dict mapping consonant labels (e.g. 'B') to lists of extracted
         WAV file paths.
-      - list of warning/info messages for the user.
+      - list of Messages for the user.
   """
-  warnings = []
+  messages = []
 
   if dest_dir is None:
     dest_dir = tempfile.mkdtemp(prefix='vcv_custom_')
@@ -76,8 +95,9 @@ def extract_and_validate_zip(
     ) as zf:
       zf.extractall(dest_dir)
   except zipfile.BadZipFile:
-    warnings.append('❌ The uploaded file is not a valid ZIP archive.')
-    return {}, warnings
+    messages.append(
+        Message(Level.ERROR, '❌ The uploaded file is not a valid ZIP archive.'))
+    return {}, messages
 
   # Discover top-level folders.  Handle both flat structure
   # (ABA/, ADA/) and single-root-folder structure (MyStimuli/ABA/, ...).
@@ -111,15 +131,17 @@ def extract_and_validate_zip(
     label = VCV_TO_LABEL.get(vcv_token)
 
     if label is None:
-      warnings.append(
-          f'⚠️ Skipping unknown VCV folder: "{folder_name}"'
+      messages.append(
+          Message(Level.WARNING,
+                  f'⚠️ Skipping unknown VCV folder: "{folder_name}"')
       )
       continue
 
     if label not in SUPPORTED_LABELS:
-      warnings.append(
-          f'⚠️ Skipping "{folder_name}" ({label}) — not in the '
-          f'supported consonant set.'
+      messages.append(
+          Message(Level.WARNING,
+                  f'⚠️ Skipping "{folder_name}" ({label}) — not in the '
+                  f'supported consonant set.')
       )
       continue
 
@@ -130,15 +152,18 @@ def extract_and_validate_zip(
     ])
 
     if not wav_files:
-      warnings.append(
-          f'⚠️ Folder "{folder_name}" contains no WAV files — skipping.'
+      messages.append(
+          Message(
+              Level.WARNING,
+              f'⚠️ Folder "{folder_name}" contains no WAV files — skipping.')
       )
       continue
 
     if len(wav_files) > MAX_WAV_FILES_PER_TOKEN:
-      warnings.append(
-          f'⚠️ Folder "{folder_name}" has {len(wav_files)} WAVs; '
-          f'using first {MAX_WAV_FILES_PER_TOKEN}.'
+      messages.append(
+          Message(Level.WARNING,
+                  f'⚠️ Folder "{folder_name}" has {len(wav_files)} WAVs; '
+                  f'using first {MAX_WAV_FILES_PER_TOKEN}.')
       )
       wav_files = wav_files[:MAX_WAV_FILES_PER_TOKEN]
 
@@ -152,15 +177,17 @@ def extract_and_validate_zip(
         sr, data = wavfile.read(wav_path)
         duration_s = len(data) / sr
         if duration_s > MAX_WAV_DURATION_S:
-          warnings.append(
-              f'⚠️ "{folder_name}/{wav_name}" is {duration_s:.1f}s '
-              f'(max {MAX_WAV_DURATION_S}s) — skipping.'
+          messages.append(
+              Message(Level.WARNING,
+                      f'⚠️ "{folder_name}/{wav_name}" is {duration_s:.1f}s '
+                      f'(max {MAX_WAV_DURATION_S}s) — skipping.')
           )
           continue
       except Exception as e:  # pylint: disable=broad-exception-caught
-        warnings.append(
-            f'⚠️ Could not read "{folder_name}/{wav_name}": {e} '
-            f'— skipping.'
+        messages.append(
+            Message(Level.WARNING,
+                    f'⚠️ Could not read "{folder_name}/{wav_name}": {e} '
+                    f'— skipping.')
         )
         continue
 
@@ -170,14 +197,16 @@ def extract_and_validate_zip(
       stimuli[label] = valid_paths
 
   if not stimuli:
-    warnings.append(
-        '❌ No valid VCV stimuli found. Please check your ZIP structure.'
+    messages.append(
+        Message(
+            Level.ERROR,
+            '❌ No valid VCV stimuli found. Please check your ZIP structure.')
     )
   else:
     loaded = ', '.join(sorted(stimuli.keys()))
-    warnings.insert(0, f'✅ Loaded consonants: {loaded}')
+    messages.insert(0, Message(Level.SUCCESS, f'✅ Loaded consonants: {loaded}'))
 
-  return stimuli, warnings
+  return stimuli, messages
 
 
 def cleanup_temp_dir(path: str | None):

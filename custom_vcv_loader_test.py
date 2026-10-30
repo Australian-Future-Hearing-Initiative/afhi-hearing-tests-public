@@ -78,7 +78,7 @@ class TestExtractAndValidateZip:
     })
 
     with tempfile.TemporaryDirectory() as tmpdir:
-      stimuli, warnings = custom_vcv_loader.extract_and_validate_zip(
+      stimuli, messages = custom_vcv_loader.extract_and_validate_zip(
           zip_bytes, dest_dir=tmpdir
       )
 
@@ -86,7 +86,8 @@ class TestExtractAndValidateZip:
     assert 'D' in stimuli
     assert len(stimuli['B']) == 2
     assert len(stimuli['D']) == 1
-    assert any('✅' in w for w in warnings)
+    assert any(
+        msg.level == custom_vcv_loader.Level.SUCCESS for msg in messages)
 
   def test_case_insensitive_folders(self):
     """Folder names are matched case-insensitively."""
@@ -113,12 +114,12 @@ class TestExtractAndValidateZip:
     })
 
     with tempfile.TemporaryDirectory() as tmpdir:
-      stimuli, warnings = custom_vcv_loader.extract_and_validate_zip(
+      stimuli, messages = custom_vcv_loader.extract_and_validate_zip(
           zip_bytes, dest_dir=tmpdir
       )
 
     assert 'B' in stimuli
-    assert any('UNKNOWN' in w for w in warnings)
+    assert any('UNKNOWN' in msg.text for msg in messages)
 
   def test_unsupported_consonant_skipped(self):
     """VCVs that map to consonants outside the supported set are skipped."""
@@ -130,13 +131,13 @@ class TestExtractAndValidateZip:
     })
 
     with tempfile.TemporaryDirectory() as tmpdir:
-      stimuli, warnings = custom_vcv_loader.extract_and_validate_zip(
+      stimuli, messages = custom_vcv_loader.extract_and_validate_zip(
           zip_bytes, dest_dir=tmpdir
       )
 
     assert 'B' in stimuli
     assert 'L' not in stimuli
-    assert any('L' in w for w in warnings)
+    assert any('L' in msg.text for msg in messages)
 
   def test_too_long_wav_skipped(self):
     """WAV files exceeding MAX_WAV_DURATION_S are skipped."""
@@ -147,12 +148,12 @@ class TestExtractAndValidateZip:
     })
 
     with tempfile.TemporaryDirectory() as tmpdir:
-      stimuli, warnings = custom_vcv_loader.extract_and_validate_zip(
+      stimuli, messages = custom_vcv_loader.extract_and_validate_zip(
           zip_bytes, dest_dir=tmpdir
       )
 
     assert len(stimuli['B']) == 1
-    assert any('6.0s' in w for w in warnings)
+    assert any('6.0s' in msg.text for msg in messages)
 
   def test_empty_zip(self):
     """An empty ZIP returns no stimuli and an error message."""
@@ -161,12 +162,12 @@ class TestExtractAndValidateZip:
       pass
 
     with tempfile.TemporaryDirectory() as tmpdir:
-      stimuli, warnings = custom_vcv_loader.extract_and_validate_zip(
+      stimuli, messages = custom_vcv_loader.extract_and_validate_zip(
           buf.getvalue(), dest_dir=tmpdir
       )
 
     assert not stimuli
-    assert any('❌' in w for w in warnings)
+    assert any(msg.level == custom_vcv_loader.Level.ERROR for msg in messages)
 
   def test_wrapper_folder_handled(self):
     """A ZIP with a single root wrapper folder is unwrapped."""
@@ -185,11 +186,11 @@ class TestExtractAndValidateZip:
 
   def test_invalid_zip_data(self):
     """Invalid bytes produce an error, not a crash."""
-    stimuli, warnings = custom_vcv_loader.extract_and_validate_zip(
+    stimuli, messages = custom_vcv_loader.extract_and_validate_zip(
         b'not a zip file'
     )
     assert not stimuli
-    assert any('❌' in w for w in warnings)
+    assert any(msg.level == custom_vcv_loader.Level.ERROR for msg in messages)
 
   def test_empty_subfolder_skipped(self):
     """A subfolder with no WAVs is skipped with a warning."""
@@ -200,10 +201,10 @@ class TestExtractAndValidateZip:
       zf.writestr('ADA/s1.wav', _make_wav_bytes(1.0))
 
     with tempfile.TemporaryDirectory() as tmpdir:
-      stimuli, warnings = custom_vcv_loader.extract_and_validate_zip(
+      stimuli, messages = custom_vcv_loader.extract_and_validate_zip(
           buf.getvalue(), dest_dir=tmpdir
       )
 
     assert 'B' not in stimuli
     assert 'D' in stimuli
-    assert any('no WAV' in w for w in warnings)
+    assert any('no WAV' in msg.text for msg in messages)

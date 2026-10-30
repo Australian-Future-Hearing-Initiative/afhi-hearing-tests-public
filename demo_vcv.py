@@ -93,7 +93,7 @@ DEFAULTS = {
     'vcv_custom_stimuli_loaded': False,
     'vcv_custom_wav_dir': None,
     'vcv_custom_consonants': [],
-    'vcv_custom_load_errors': [],
+    'vcv_custom_load_messages': [],
 }
 
 DEFAULT_MERGE_LR = False
@@ -332,7 +332,7 @@ def reset_results_only():
     st.session_state.vcv_custom_wav_dir = None
     st.session_state.vcv_custom_stimuli_loaded = False
     st.session_state.vcv_custom_consonants = []
-    st.session_state.vcv_custom_load_errors = []
+    st.session_state.vcv_custom_load_messages = []
 
   set_initial_demo_state()
 
@@ -1117,7 +1117,7 @@ def _display_custom_stimuli_uploader(disabled: bool):
 
         st.session_state.vcv_custom_consonants = sorted(stimuli.keys())
         st.session_state.vcv_custom_stimuli_loaded = True
-        st.session_state.vcv_custom_load_errors = messages
+        st.session_state.vcv_custom_load_messages = messages
 
         # Rebuild the base files now that we have custom stimuli.
         st.session_state.base_files_by_consonant = _get_all_base_names()
@@ -1125,17 +1125,17 @@ def _display_custom_stimuli_uploader(disabled: bool):
         st.session_state.vcv_estimators = None
         initialize_estimators()
       else:
-        st.session_state.vcv_custom_load_errors = messages
+        st.session_state.vcv_custom_load_messages = messages
 
   # Display status messages.
-  if st.session_state.vcv_custom_load_errors:
-    for msg in st.session_state.vcv_custom_load_errors:
-      if msg.startswith('✅'):
-        st.success(msg)
-      elif msg.startswith('❌'):
-        st.error(msg)
-      else:
-        st.warning(msg)
+  if st.session_state.vcv_custom_load_messages:
+    alerts = {
+        custom_vcv_loader.Level.SUCCESS: st.success,
+        custom_vcv_loader.Level.WARNING: st.warning,
+        custom_vcv_loader.Level.ERROR: st.error,
+    }
+    for msg in st.session_state.vcv_custom_load_messages:
+      alerts[msg.level](msg.text)
 
 
 def display_settings():
