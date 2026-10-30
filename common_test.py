@@ -243,6 +243,32 @@ def test_get_scaled_vcv_data_file_not_found():
       )
 
 
+# --- to_pcm ---
+
+@pytest.mark.parametrize('datatype,full_scale', [
+    ('int16', 32767), ('int32', 2147483647)])
+def test_to_pcm_clips_instead_of_wrapping(datatype, full_scale):
+  '''Values past full scale saturate rather than flipping sign.'''
+  pcm = common.to_pcm(np.array([1.001, -1.001, 0.5]), datatype)
+  np.testing.assert_array_equal(
+      pcm[:2], [full_scale, -full_scale])
+
+
+@pytest.mark.parametrize('datatype', ['float32', 'int32', 'int16'])
+def test_to_pcm_matches_the_old_cast_in_range(datatype):
+  '''In-range signals convert exactly as the demos' inline casts did.'''
+  tone = np.random.default_rng(0).uniform(-1, 1, 1000)
+  old = {'float32': tone.astype(np.float32),
+         'int32': (tone * common.MAX_32_BIT_INT).astype(np.int32),
+         'int16': (tone * common.MAX_16_BIT_INT).astype(np.int16)}[datatype]
+  np.testing.assert_array_equal(common.to_pcm(tone, datatype), old)
+
+
+def test_to_pcm_rejects_unknown_datatype():
+  with pytest.raises(ValueError):
+    common.to_pcm(np.zeros(3), 'int8')
+
+
 # --- autoplay_wav: playback without temp files ---
 
 def _played_samples(mock_html):
