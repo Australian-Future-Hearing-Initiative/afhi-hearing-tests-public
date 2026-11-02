@@ -99,7 +99,9 @@ def advanced_speech_shaped_noise(white_noise: np.ndarray, sample_rate: int):
   final_noise = signal.lfilter(b_ac, a_ac, shaped_noise)
 
   # Normalize the final output to have a peak amplitude of 1.0.
-  final_noise /= np.max(np.abs(final_noise))
+  peak = np.max(np.abs(final_noise))
+  if peak > 0:
+    final_noise /= peak
   return final_noise
 
 

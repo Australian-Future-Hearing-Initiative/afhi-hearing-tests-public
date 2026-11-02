@@ -43,6 +43,12 @@ class TestAudioSynthesis:
     assert np.max(np.abs(shaped)) <= 1.0
     assert not np.allclose(shaped, white_noise)
 
+  def test_advanced_speech_shaped_noise_silent_input(self):
+    """Silent input gives silent output, not NaNs from dividing by zero."""
+    shaped = audio_synthesis.advanced_speech_shaped_noise(np.zeros(4410),
+                                                          44100)
+    np.testing.assert_array_equal(shaped, np.zeros(4410))
+
   def test_advanced_speech_shaped_noise_invalid_sr(self):
     """Tests that advanced noise shaping rejects too-low sample rates."""
     with pytest.raises(
