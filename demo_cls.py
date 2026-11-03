@@ -8,6 +8,7 @@ import time
 
 import audio_tools
 import calibration
+import cls_audiogram
 import cls_results
 import common
 import run_qcls
@@ -82,6 +83,9 @@ def set_initial_demo_state():
   st.session_state.cls_first_ear = None  # Starting ear (always left).
   st.session_state.cls_archive_stimuli = []  # First ear's stimuli.
   st.session_state.cls_archive_responses = []  # First ear's responses.
+  # Optional PTA audiogram used to avoid playing inaudible tones.
+  st.session_state.cls_audiogram = None
+  st.session_state.cls_audiogram_error = None
 
 def format_model_params(model: dict, ear: str) -> str:
   """Formats the loudness model parameters into a readable string."""
@@ -178,15 +182,24 @@ def generate_next_stimulus(
     model = st.session_state.cls_loudness_model_right
   # Use the hearing model to generate test frequencies
   # and amplitudes.
-  freq_hz, amplitude = (
-      hearing_models.random_test_frequency_and_amplitude(
-          min_freq=min_freq,
-          max_freq=max_freq,
-          loudness_model=model
-      )
-  )
-  # Make sure amplitude does not exceed the maximum allowed.
+  def draw():
+    return hearing_models.random_test_frequency_and_amplitude(
+        min_freq=min_freq,
+        max_freq=max_freq,
+        loudness_model=model
+    )
   max_amp = calibration.dbspl_to_amp(st.session_state.cls_max_volume)
+  audiogram = st.session_state.get('cls_audiogram')
+  if audiogram:
+    # Redraw any tone below the subject's threshold (plus margin), so the
+    # number of tones played is unchanged but none are wasted.
+    freq_hz, amplitude = cls_audiogram.draw_audible_stimulus(
+        draw,
+        lambda f: cls_audiogram.floor_amplitude(f, ear, audiogram),
+        max_amp)
+  else:
+    freq_hz, amplitude = draw()
+  # Make sure amplitude does not exceed the maximum allowed.
   if amplitude > max_amp:
     amplitude = max_amp
     print('Reduced amplitude to:', amplitude)
@@ -489,6 +502,39 @@ def display_settings():
     'Set the number of samples per ear:',
     1, MAX_N_TESTS, st.session_state.cls_n_tests,
     disabled=settings_disabled)
+  display_audiogram_upload()
+
+def display_audiogram_upload():
+  """Displays the optional audiogram upload and stores the parsed result."""
+  # Available in all modes (including NAL), but locked once the test starts.
+  test_started = st.session_state.cls_state != 'Initial'
+  margin = cls_audiogram.AUDIOGRAM_MARGIN_DB
+  uploads = st.file_uploader(
+      'Optional: upload an audiogram from the PTA test',
+      type=['zip', 'csv'],
+      accept_multiple_files=True,
+      key='cls_audiogram_upload',
+      disabled=test_started,
+      help=('Upload the PTA results zip, or the left and/or right audiogram '
+            f'CSV files. Tones less than {margin:g} dB above your threshold '
+            'will not be played.'))
+  if not test_started:
+    st.session_state.cls_audiogram = None
+    st.session_state.cls_audiogram_error = None
+    if uploads:
+      try:
+        st.session_state.cls_audiogram = (
+            cls_audiogram.load_audiogram_files(
+                [(f.name, f.getvalue()) for f in uploads]))
+      except ValueError as e:
+        st.session_state.cls_audiogram_error = str(e)
+  if st.session_state.get('cls_audiogram'):
+    ears = ' and '.join(
+        e for e in cls_audiogram.EARS if e in st.session_state.cls_audiogram)
+    st.success(f'Audiogram loaded ({ears} ear). Tones less than {margin:g} dB '
+               'above threshold will not be played.')
+  elif st.session_state.get('cls_audiogram_error'):
+    st.error(f'Audiogram not loaded: {st.session_state.cls_audiogram_error}')
 
 def create_main_demo():
   """Controls the states and state transitions of the main demo."""
@@ -573,6 +619,10 @@ def create_main_demo():
           ('model_params_left.txt', left_model_str),
           ('model_params_right.txt', right_model_str)
       ]
+      if st.session_state.get('cls_audiogram'):
+        files_for_zip.append((
+            'cls_audiogram_floor.csv',
+            cls_audiogram.generate_floor_csv(st.session_state.cls_audiogram)))
 
       # Generate zip data and filename.
       zip_data = common.generate_zip_bytes(files_for_zip)
