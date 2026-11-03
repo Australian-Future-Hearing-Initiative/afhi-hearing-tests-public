@@ -3,6 +3,7 @@
 import base64
 import io
 import os
+import re
 import tempfile
 import unittest
 import zipfile
@@ -72,6 +73,13 @@ def _write_temp_wav(data, sample_rate=44100):
   os.close(handle)
   _wavfile.write(path, sample_rate, data)
   return path
+
+
+# --- results_timestamp ---
+
+def test_results_timestamp_has_seconds():
+  '''Results names are stamped to the second, e.g. 20261025_143012.'''
+  assert re.fullmatch(r'\d{8}_\d{6}', common.results_timestamp())
 
 
 # --- read_wav_as_float ---

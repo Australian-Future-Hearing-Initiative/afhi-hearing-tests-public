@@ -387,7 +387,7 @@ def _bundle_wav_files():
   wav_files = sorted(glob.glob(os.path.join(wav_dir, '*.wav')))
   if not wav_files:
     return
-  timestamp = datetime.now().strftime('%Y%m%d_%H%M')
+  timestamp = common.results_timestamp()
   zip_filename = f'UTC{timestamp}_vcv_audio.zip'
   zip_path = os.path.join('local_results', zip_filename)
   os.makedirs('local_results', exist_ok=True)
