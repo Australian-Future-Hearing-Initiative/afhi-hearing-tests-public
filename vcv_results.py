@@ -4,7 +4,6 @@ import glob
 import io
 import os
 import shutil
-import time
 
 import matplotlib.pyplot as plt
 from matplotlib.lines import Line2D
@@ -262,7 +261,7 @@ def display_results(
   buffer = io.StringIO()
   buffer.write(f'# {common.DEMO_UPDATED}\n')
   buffer.write('# Consonant Confusion Test Results\n')
-  buffer.write(f"# Test date/time (UTC): {time.strftime('%Y-%m-%d %H:%M')}\n")
+  buffer.write(f"# Test date/time (UTC): {common.results_datetime()}\n")
   if merge_lr:
     buffer.write('# Test Mode: Merged L/R\n')
   else:
@@ -413,7 +412,7 @@ def display_adaptive_results(
   buffer = io.StringIO()
   buffer.write(f'# {common.DEMO_UPDATED}\n')
   buffer.write('# Adaptive Consonant Test Results\n')
-  buffer.write(f"# Test date/time (UTC): {time.strftime('%Y-%m-%d %H:%M')}\n")
+  buffer.write(f"# Test date/time (UTC): {common.results_datetime()}\n")
   mode_str = 'Binaural (Merged)' if is_merged else 'Monaural (Interleaved)'
   buffer.write(f'# Test Mode: {mode_str}\n')
   buffer.write(f'# Total trials: {total_trials}\n')

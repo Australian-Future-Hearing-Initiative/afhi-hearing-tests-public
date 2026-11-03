@@ -1,7 +1,6 @@
 """Functions relating to the calculation or download of pip test results."""
 
 import io
-import time
 
 import pandas as pd
 import streamlit as st
@@ -25,7 +24,7 @@ def generate_pip_full_results_csv(pip_results: list,
   buffer = io.StringIO()
   buffer.write(f'# {DEMO_UPDATED}\n')
   buffer.write('# Pip-Based Pure-Tone Audiometry Test Results\n')
-  buffer.write(f"# Test date/time (UTC): {time.strftime('%Y-%m-%d %H:%M')}\n")
+  buffer.write(f"# Test date/time (UTC): {common.results_datetime()}\n")
   buffer.write(f'# Tones presented: {len(pip_results)}\n')
   buffer.write(f'# Test duration: {int(pip_duration_s)} s\n')
   volume_str = common.get_macos_system_volume()
@@ -52,7 +51,7 @@ def generate_pip_audiogram_csv(ear_label: str, audiogram_data: list) -> str:
   """
   buffer = io.StringIO()
   buffer.write(f'# {ear_label}-Ear Audiogram\n')
-  buffer.write(f"# Test date/time (UTC): {time.strftime('%Y-%m-%d %H:%M')}\n")
+  buffer.write(f"# Test date/time (UTC): {common.results_datetime()}\n")
   buffer.write('# Frequency (Hz), Threshold (dB HL)\n')
   for freq, thresh in audiogram_data:
     buffer.write(f'{freq},{thresh}\n')

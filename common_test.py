@@ -1,10 +1,12 @@
 """Unit tests for common.py."""
 
 import base64
+from datetime import datetime, timedelta, timezone
 import io
 import os
 import re
 import tempfile
+import time
 import unittest
 import zipfile
 from unittest.mock import MagicMock, patch
@@ -80,6 +82,33 @@ def _write_temp_wav(data, sample_rate=44100):
 def test_results_timestamp_has_seconds():
   '''Results names are stamped to the second, e.g. 20261025_143012.'''
   assert re.fullmatch(r'\d{8}_\d{6}', common.results_timestamp())
+
+
+@pytest.fixture
+def local_time_utc_plus_10(monkeypatch):
+  '''Runs the test with the process's local time zone at UTC+10.'''
+  monkeypatch.setenv('TZ', 'Etc/GMT-10')  # POSIX sign is inverted.
+  time.tzset()
+  yield
+  monkeypatch.undo()
+  time.tzset()
+
+
+def _assert_near_utc_now(stamp: str, fmt: str):
+  stamped = datetime.strptime(stamp, fmt).replace(tzinfo=timezone.utc)
+  assert abs(datetime.now(timezone.utc) - stamped) < timedelta(minutes=2)
+
+
+@pytest.mark.usefixtures('local_time_utc_plus_10')
+def test_results_timestamp_is_utc():
+  '''Names are prefixed UTC, so the stamp ignores the local time zone.'''
+  _assert_near_utc_now(common.results_timestamp(), '%Y%m%d_%H%M%S')
+
+
+@pytest.mark.usefixtures('local_time_utc_plus_10')
+def test_results_datetime_is_utc():
+  '''The "Test date/time (UTC)" header ignores the local time zone.'''
+  _assert_near_utc_now(common.results_datetime(), '%Y-%m-%d %H:%M')
 
 
 # --- read_wav_as_float ---
