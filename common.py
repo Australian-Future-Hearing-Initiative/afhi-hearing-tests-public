@@ -1,7 +1,7 @@
 """Functions shared across multiple demos in the app."""
 
 import base64
-from datetime import datetime
+from datetime import datetime, timezone
 from email.mime.application import MIMEApplication
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
@@ -264,11 +264,17 @@ def send_results_email(
         print(f'Warning: Failed to close SMTP connection cleanly: {e}')
 
 def results_timestamp() -> str:
-  """Returns the timestamp used in results file names, to the second.
+  """Returns the UTC timestamp used in results file names, to the second.
 
-  Seconds keep two saves in the same minute from sharing a name.
+  The names are prefixed 'UTC', so this must not use the server's local
+  time. Seconds keep two saves in the same minute from sharing a name.
   """
-  return datetime.now().strftime('%Y%m%d_%H%M%S')
+  return datetime.now(timezone.utc).strftime('%Y%m%d_%H%M%S')
+
+
+def results_datetime() -> str:
+  """Returns the UTC date and time written in results file headers."""
+  return datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M')
 
 def display_email_results_form(
     test_name: str,

@@ -2,7 +2,6 @@
 
 import io
 import pandas as pd
-import time
 
 import streamlit as st
 
@@ -25,7 +24,7 @@ def generate_cls_results_csv(df: pd.DataFrame,
   buffer.write(f'# {DEMO_UPDATED}\n')
   buffer.write('# Test Method: adaptive\n')
   buffer.write('# Categorical Loudness Scaling Test Results\n')
-  buffer.write(f"# Test date/time (UTC): {time.strftime('%Y-%m-%d %H:%M')}\n")
+  buffer.write(f"# Test date/time (UTC): {common.results_datetime()}\n")
   buffer.write(f'# Number of stimuli: {len(df)}\n')
   buffer.write(f'# Test duration: {int(duration_s)} s\n')
   volume_str = common.get_macos_system_volume()
