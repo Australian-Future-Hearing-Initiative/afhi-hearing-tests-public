@@ -138,3 +138,96 @@ SINGLE_EXAMPLE = {
         8000: 10.0,
     },
 }
+
+# Bisgaard, Vlaming & Dahlquist (2010), "Standard audiograms for the IEC
+# 60118-15 measurement procedure", Trends in Amplification 14(2):113-120.
+# Derived by vector quantization of 28,244 clinical ears (Stockholm South
+# Hospital). Frequencies are those measured in the study; the paper's
+# interpolated 375 Hz and 750 Hz values are omitted. No 8 kHz data.
+BISGAARD_FREQS_HZ = (250, 500, 1000, 1500, 2000, 3000, 4000, 6000)
+
+
+def _bisgaard(*values: float) -> dict[int, float]:
+  return dict(zip(BISGAARD_FREQS_HZ, (float(v) for v in values), strict=True))
+
+
+# The 10 proposed standard audiograms (Tables 2 and 4): N1-N7 flat and
+# moderately sloping, S1-S3 steeply sloping.
+BISGAARD_STANDARD_AUDIOGRAMS = {
+    'N1': _bisgaard(10, 10, 10, 10, 15, 20, 30, 40),
+    'N2': _bisgaard(20, 20, 25, 30, 35, 40, 45, 50),
+    'N3': _bisgaard(35, 35, 40, 45, 50, 55, 60, 65),
+    'N4': _bisgaard(55, 55, 55, 60, 65, 70, 75, 80),
+    'N5': _bisgaard(65, 70, 75, 80, 80, 80, 80, 80),
+    'N6': _bisgaard(75, 80, 85, 90, 90, 95, 100, 100),
+    'N7': _bisgaard(90, 95, 105, 105, 105, 105, 105, 105),
+    'S1': _bisgaard(10, 10, 10, 10, 15, 30, 55, 70),
+    'S2': _bisgaard(20, 20, 25, 35, 55, 75, 95, 95),
+    'S3': _bisgaard(30, 35, 60, 70, 75, 80, 80, 85),
+}
+
+# All 60 typical audiogram vectors (code vectors) of the K = 60 analysis
+# (Table A.1), keyed by audiogram ID. Each is the centroid of a cluster of real
+# ears, so it is smoother than an individual audiogram.
+BISGAARD_TYPICAL_AUDIOGRAMS = {
+    'A40': _bisgaard(0, 0, 0, 0, 0, 0, 0, 0),
+    'A45': _bisgaard(5, 5, 5, 10, 5, 5, 10, 5),
+    'A46': _bisgaard(10, 5, 5, 5, 0, 5, 5, 15),
+    'A44': _bisgaard(10, 10, 10, 15, 15, 15, 20, 20),
+    'A4': _bisgaard(10, 10, 10, 10, 10, 20, 35, 40),
+    'A41': _bisgaard(10, 10, 10, 10, 10, 10, 20, 45),
+    'A5': _bisgaard(10, 10, 15, 20, 25, 30, 40, 50),
+    'A38': _bisgaard(10, 10, 20, 35, 50, 65, 75, 85),
+    'A32': _bisgaard(10, 10, 25, 35, 45, 50, 55, 60),
+    'A3': _bisgaard(10, 15, 20, 30, 30, 30, 35, 30),
+    'A33': _bisgaard(15, 10, 10, 20, 30, 55, 65, 65),
+    'A37': _bisgaard(15, 10, 10, 15, 15, 30, 55, 70),
+    'A42': _bisgaard(15, 15, 10, 10, 10, 5, 10, 15),
+    'A31': _bisgaard(15, 20, 35, 50, 55, 60, 65, 65),
+    'A15': _bisgaard(15, 20, 35, 60, 70, 80, 90, 95),
+    'A36': _bisgaard(20, 15, 20, 35, 55, 60, 65, 60),
+    'A13': _bisgaard(20, 15, 20, 35, 55, 80, 95, 95),
+    'A43': _bisgaard(20, 20, 20, 20, 20, 15, 20, 20),
+    'A1': _bisgaard(20, 20, 25, 30, 35, 40, 50, 50),
+    'A27': _bisgaard(20, 20, 25, 35, 40, 55, 65, 75),
+    'A14': _bisgaard(20, 20, 30, 50, 65, 70, 75, 80),
+    'A25': _bisgaard(20, 25, 35, 45, 45, 50, 60, 75),
+    'A28': _bisgaard(20, 30, 40, 45, 45, 45, 50, 60),
+    'A7': _bisgaard(20, 30, 45, 50, 45, 35, 30, 25),
+    'A8': _bisgaard(25, 25, 25, 25, 25, 25, 30, 40),
+    'A12': _bisgaard(25, 35, 60, 75, 75, 75, 80, 85),
+    'A30': _bisgaard(30, 25, 25, 35, 45, 65, 80, 90),
+    'A24': _bisgaard(30, 30, 40, 50, 50, 60, 70, 75),
+    'A26': _bisgaard(30, 35, 40, 50, 55, 65, 75, 90),
+    'A9': _bisgaard(30, 35, 45, 60, 65, 65, 75, 75),
+    'A34': _bisgaard(30, 35, 45, 55, 55, 50, 55, 55),
+    'A11': _bisgaard(30, 35, 60, 80, 90, 100, 105, 105),
+    'A50': _bisgaard(30, 45, 60, 65, 65, 60, 65, 65),
+    'A39': _bisgaard(35, 30, 25, 30, 30, 40, 50, 65),
+    'A2': _bisgaard(35, 35, 35, 35, 35, 35, 35, 40),
+    'A23': _bisgaard(35, 35, 40, 45, 50, 55, 60, 70),
+    'A10': _bisgaard(35, 35, 45, 60, 65, 80, 95, 100),
+    'A35': _bisgaard(35, 40, 40, 40, 40, 40, 45, 55),
+    'A6': _bisgaard(40, 40, 40, 35, 25, 20, 20, 25),
+    'A48': _bisgaard(40, 45, 50, 55, 55, 55, 60, 70),
+    'A59': _bisgaard(40, 45, 50, 60, 60, 60, 70, 85),
+    'A51': _bisgaard(40, 55, 65, 70, 70, 70, 80, 95),
+    'A29': _bisgaard(45, 45, 40, 40, 40, 50, 65, 75),
+    'A53': _bisgaard(45, 50, 60, 70, 70, 75, 80, 80),
+    'A49': _bisgaard(50, 45, 50, 60, 60, 60, 70, 70),
+    'A57': _bisgaard(50, 55, 60, 60, 55, 50, 55, 65),
+    'A60': _bisgaard(55, 50, 45, 50, 50, 50, 60, 60),
+    'A56': _bisgaard(55, 50, 50, 50, 50, 60, 75, 85),
+    'A52': _bisgaard(55, 55, 55, 60, 65, 65, 75, 80),
+    'A54': _bisgaard(55, 55, 55, 50, 45, 40, 40, 45),
+    'A47': _bisgaard(55, 55, 60, 65, 70, 70, 75, 95),
+    'A19': _bisgaard(55, 60, 65, 75, 80, 90, 100, 105),
+    'A18': _bisgaard(55, 65, 90, 105, 105, 110, 110, 110),
+    'A16': _bisgaard(60, 55, 55, 60, 65, 80, 90, 95),
+    'A55': _bisgaard(60, 65, 65, 65, 65, 60, 65, 70),
+    'A21': _bisgaard(65, 70, 75, 80, 80, 75, 80, 80),
+    'A22': _bisgaard(75, 80, 85, 90, 90, 95, 100, 100),
+    'A58': _bisgaard(80, 75, 70, 70, 65, 65, 70, 75),
+    'A20': _bisgaard(80, 80, 75, 75, 75, 75, 85, 95),
+    'A17': _bisgaard(90, 95, 105, 105, 105, 105, 105, 105),
+}
