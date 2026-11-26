@@ -6,7 +6,7 @@
 # MAX_RMS_ERROR_DB: 9.5
 # MIN_FREQUENCY_HZ: 125
 # MAX_FREQUENCY_HZ: 8000
-# MIN_DBHL: -10
+# MIN_DBHL: -20
 # MAX_DBHL: 120
 # REQUIRED_FREQUENCIES_HZ: 500 1000 2000 4000
 # MIN_FREQUENCIES: 6
@@ -21,6 +21,7 @@ notch_6k,Notch at 6 kHz with recovery at 8 kHz,,10,10,,10,,10,15,25,45,25,,plaus
 notch_6k_deep,"Deep notch at 6 kHz with recovery at 8 kHz, over the limit (a real loss of this shape would be wrongly rejected)",,10,5,,10,,10,15,25,60,20,,implausible,11.152639
 cookie_bite,"Cookie-bite (mid-frequency) loss, 125 Hz to 4 kHz with nothing above",10,5,10,25,30,45,50,,20,,,,plausible,1.489629
 profound_at_max,"Profound loss reaching 120 dB HL, the top of the accepted range",,90,95,,105,,110,115,120,120,120,,plausible,1.025273
+isolated_at_min,"Near-normal hearing with -20 dB HL at 1 kHz, the bottom of the accepted range",,10,5,,-20,,10,10,15,15,20,,plausible,6.141802
 better_than_zero,"Thresholds below 0 dB HL; the c1 >= 0 constraint is active, so an unconstrained fit gives a lower RMS",,-10,-10,,-5,,-10,-5,-10,-5,-10,,plausible,8.299672
 steep_accepted,"Steep drop from 2 to 3 kHz, just under the limit",,10,10,,15,,20,75,80,85,85,,plausible,8.885981
 steep_rejected,"Steeper drop from 2 to 3 kHz, just over the limit (a real loss of this shape would be wrongly rejected)",,10,10,,10,,15,80,85,90,90,,implausible,10.615139
@@ -32,7 +33,7 @@ six_freqs_inside,"Minimum of 6 frequencies, extras inside 500 Hz-4 kHz (least we
 no_8k,"7 frequencies, 250 Hz to 6 kHz",,15,20,,25,,35,45,50,55,,,plausible,1.089803
 ten_freqs,"10 frequencies, including 750 Hz and 1.5 kHz",,15,20,20,25,30,35,45,50,55,60,,plausible,1.040072
 above_range,"125 dB HL at 8 kHz, above the accepted range",,15,20,,25,,35,45,50,55,125,,implausible,
-below_range,"-15 dB HL at 250 Hz, below the accepted range",,-15,20,,25,,35,45,50,55,60,,implausible,
+below_range,"-25 dB HL at 250 Hz, below the accepted range",,-25,20,,25,,35,45,50,55,60,,implausible,
 frequency_out_of_range,"The 8 standard frequencies plus 10 kHz, above the accepted range",,15,20,,25,,35,45,50,55,60,65,error,
 missing_required,"7 frequencies, but no 4 kHz",,15,20,,25,,35,45,,55,60,,error,
 too_few,The 4 required frequencies and only one other,,,20,,25,,35,,50,,60,,error,
