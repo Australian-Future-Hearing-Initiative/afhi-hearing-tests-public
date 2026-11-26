@@ -66,6 +66,10 @@ CASES = (
     ('profound_at_max',
      'Profound loss reaching 120 dB HL, the top of the accepted range',
      _std(90, 95, 105, 110, 115, 120, 120, 120)),
+    ('isolated_at_min',
+     'Near-normal hearing with -20 dB HL at 1 kHz, the bottom of the accepted '
+     'range',
+     _std(10, 5, -20, 10, 10, 15, 15, 20)),
     ('better_than_zero',
      'Thresholds below 0 dB HL; the c1 >= 0 constraint is active, so an '
      'unconstrained fit gives a lower RMS',
@@ -98,8 +102,8 @@ CASES = (
       4000: 50, 6000: 55, 8000: 60}),
     ('above_range', '125 dB HL at 8 kHz, above the accepted range',
      _std(15, 20, 25, 35, 45, 50, 55, 125)),
-    ('below_range', '-15 dB HL at 250 Hz, below the accepted range',
-     _std(-15, 20, 25, 35, 45, 50, 55, 60)),
+    ('below_range', '-25 dB HL at 250 Hz, below the accepted range',
+     _std(-25, 20, 25, 35, 45, 50, 55, 60)),
     ('frequency_out_of_range',
      'The 8 standard frequencies plus 10 kHz, above the accepted range',
      {**_std(15, 20, 25, 35, 45, 50, 55, 60), 10000: 65}),

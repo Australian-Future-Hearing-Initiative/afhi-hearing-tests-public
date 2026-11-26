@@ -28,11 +28,12 @@ COEFF_UPPER = np.full(4, np.inf)
 
 # Accepted range of an entered frequency (Hz).
 MIN_FREQUENCY_HZ, MAX_FREQUENCY_HZ = 125.0, 8000.0
-# Accepted range of an entered threshold (dB HL). The model has no shapes
-# better than 0 dB HL, so thresholds below 0 count fully as fit error: a flat
-# -10 dB HL audiogram at 8 frequencies is rejected (RMS 9.9 dB). No NHANES ear
-# had every threshold at -5 dB HL or better.
-MIN_DBHL, MAX_DBHL = -10.0, 120.0
+# Accepted range of an entered threshold (dB HL). The model has no overall
+# shift below 0 dB HL (c1 >= 0), so a flat audiogram at 8 frequencies is
+# rejected at -10 dB HL or below (RMS 9.9 dB at -10), though an isolated value
+# down to -20 dB HL can pass. No NHANES ear had every threshold at -5 dB HL or
+# better.
+MIN_DBHL, MAX_DBHL = -20.0, 120.0
 # RMS fit-error limit, chosen to reject under 2% of real audiograms. It rejects
 # 1.5% of 8,566 NHANES ears (2015-16, adults 20-69, 7 frequencies from 500 Hz
 # to 8 kHz) and none of the 106 NAL clinical ears (8 frequencies). The NHANES
