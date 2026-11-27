@@ -8,6 +8,7 @@ These tests cover existing behaviour of:
 They are written *before* the custom-stimuli feature to catch regressions.
 """
 
+import time
 from unittest.mock import patch, MagicMock
 
 import pytest
@@ -682,6 +683,38 @@ class TestSeparateEarTesting:
     assert state.vcv_completed_stimuli_current_ear == 0
     assert state.vcv_ear_switched_notice is True
     mock_prepare.assert_called_once()
+
+  @patch('demo_vcv.prepare_next_trial')
+  @patch('demo_vcv._rename_saved_wav')
+  @patch('demo_vcv.st')
+  def test_response_time_ignores_wall_clock_changes(
+      self, mock_st, unused_rename, unused_prepare
+  ):
+    """A wall-clock jump mid-trial doesn't change the reaction time."""
+    state = _SessionState({
+        'last_played_audio': 'VCV_aba_1_60SNR.wav',
+        'vcv_stimuli_type': 'Human',
+        'vcv_tone_start_time': time.monotonic() - 1.5,
+        'vcv_is_practice_trial': False,
+        'vcv_test_mode': 'Adaptive',
+        'vcv_last_condition_key': ('left', 'B'),
+        'vcv_last_snr': -6.0,
+        'vcv_responses': [],
+        'vcv_n_total_trials': 10,
+        'vcv_merge_lr': False,
+        'vcv_current_ear': 'left',
+        'vcv_completed_stimuli_current_ear': 0,
+        'vcv_ear_switched_notice': False,
+        'vcv_estimators': {('left', 'B'): MagicMock()},
+    })
+    mock_st.session_state = state
+
+    # The wall clock jumps back to the epoch while the listener answers.
+    with patch('demo_vcv.time.time', return_value=0.0):
+      demo_vcv.handle_response_button_click('B')
+
+    response_time_s = state.vcv_responses[0][5]
+    assert 1.5 <= response_time_s < 2.5
 
   @patch('demo_vcv.complete_test')
   @patch('demo_vcv._rename_saved_wav')
